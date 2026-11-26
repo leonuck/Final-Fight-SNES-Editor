@@ -15,3 +15,9 @@ img-screen_.webp
 
 # Local-only scratch script.
 .autofill-force-check.js
+
+# Screenshot embedded in the GitHub README.
+!capt-ff.png
+
+# Optional local diagnostic scripts.
+mesen_*.lua

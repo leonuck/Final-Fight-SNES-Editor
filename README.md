@@ -5,6 +5,10 @@
 > Suggested GitHub repository description (English + Portuguese):
 > **Browser-based Final Fight SNES wave editor with difficulty filters and optional 4-enemy mode | Editor de waves do Final Fight para SNES no navegador, com filtros de dificuldade e modo opcional de 4 inimigos**
 
+## Preview / Prévia
+
+![Final Fight editor screenshot / Captura de tela do editor Final Fight](capt-ff.png)
+
 ## English
 
 This project is a standalone HTML editor for inspecting and modifying stage wave scripts in the Japanese uncut release of *Final Fight Guy* for SNES.
@@ -22,7 +26,7 @@ This project is a standalone HTML editor for inspecting and modifying stage wave
 
 1. Download or clone this repository.
 2. Open `FinalFight_Enemy_Editor.html` in a modern browser. The editor has no build step or external dependencies.
-3. Load a compatible ROM file from your own collection.
+3. Start with the Japanese *Final Fight Guy (Japan)* ROM and apply the IPS patch from the [Final Fight 1 hack repository](https://github.com/leonuck/Final-Fight-1-hack). The editor requires that patched ROM; load it after applying the patch.
 4. Select a stage and wave, edit the entries, then export an `.sfc` ROM or `.ips` patch.
 
 The four-enemy mode, graphics-bank option and automatic wave editing can change gameplay and have known limitations. Review [the technical notes](FinalFight_Notas_Tecnicas.md) and test exported files in an emulator before relying on them.
@@ -31,7 +35,6 @@ The four-enemy mode, graphics-bank option and automatic wave editing can change 
 
 - `FinalFight_Enemy_Editor.html` — the editor application.
 - `FinalFight_Notas_Tecnicas.md` — Portuguese reverse-engineering and development notes, including reverted experiments and open validation items.
-- `mesen_*.lua` — optional Mesen diagnostic scripts.
 
 ROM images, emulator executables, memory dumps and generated patches are excluded from this repository. Final Fight is third-party intellectual property; this project does not provide game data.
 
@@ -56,7 +59,7 @@ Este projeto é um editor HTML independente para inspecionar e modificar scripts
 
 1. Baixe ou clone este repositório.
 2. Abra `FinalFight_Enemy_Editor.html` em um navegador moderno. O editor não precisa de compilação nem de dependências externas.
-3. Carregue uma ROM compatível da sua própria coleção.
+3. Use a ROM japonesa *Final Fight Guy (Japan)* e aplique nela o patch IPS disponível no [repositório Final Fight 1 hack](https://github.com/leonuck/Final-Fight-1-hack). O editor precisa dessa ROM já modificada; carregue-a somente depois de aplicar o patch.
 4. Selecione uma fase e uma wave, edite os registros e exporte uma ROM `.sfc` ou um patch `.ips`.
 
 O modo de quatro inimigos, a opção de banco gráfico e a edição automática de waves podem alterar o jogo e têm limitações conhecidas. Consulte as [notas técnicas](FinalFight_Notas_Tecnicas.md) e teste os arquivos exportados em um emulador.
