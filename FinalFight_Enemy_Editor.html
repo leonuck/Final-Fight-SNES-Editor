@@ -1,0 +1,2906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Fight SNES — Editor Visual de Fases, Waves &amp; 3/4 Inimigos</title>
+<style>
+  :root {
+    --bg-dark: #0f111a;
+    --bg-panel: #181b28;
+    --bg-card: #212638;
+    --bg-input: #121521;
+    --border: #2e354f;
+    --accent: #ff5722;
+    --accent-hover: #ff7043;
+    --gold: #ffc107;
+    --cyan: #00e5ff;
+    --green: #00e676;
+    --purple: #b388ff;
+    --text: #eceff4;
+    --text-muted: #949eb8;
+    --danger: #ff3d00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: linear-gradient(90deg, #1b1224 0%, #2b151d 50%, #181b28 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-badge {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 900;
+    padding: 6px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    font-size: 14px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(255,87,34,0.4);
+  }
+  .brand h1 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .brand p {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--cyan);
+    background: #282e45;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+  .btn-success {
+    background: #00897b;
+    border-color: #00bfa5;
+    color: #fff;
+  }
+  .btn-success:hover:not(:disabled) {
+    background: #00a08f;
+  }
+  .btn-danger {
+    background: rgba(255,61,0,0.15);
+    border-color: var(--danger);
+    color: #ff8a65;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  /* Mode Bar */
+  .mode-bar {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .mode-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mode-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    max-width: 460px;
+  }
+  .mode-card.active-4 {
+    border-color: var(--green);
+    background: rgba(0, 230, 118, 0.08);
+  }
+  .mode-card.active-3 {
+    border-color: var(--accent);
+    background: rgba(0, 229, 255, 0.08);
+  }
+  .mode-card.active-5 {
+    border-color: var(--gold);
+    background: rgba(255, 193, 7, 0.08);
+  }
+  .mode-card input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--accent);
+    transform: scale(1.2);
+  }
+  .mode-title {
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+  }
+  .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-green { background: rgba(0,230,118,0.2); color: var(--green); }
+  .badge-gold { background: rgba(255,193,7,0.2); color: var(--gold); }
+  .badge-cyan { background: rgba(0,229,255,0.18); color: var(--cyan); }
+  .badge-purple { background: rgba(179,136,255,0.2); color: var(--purple); }
+
+  .status-box {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-input);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* Main Layout */
+  .workspace {
+    display: grid;
+    grid-template-columns: 300px 1fr 370px;
+    flex: 1;
+    min-height: 0;
+  }
+  @media (max-width: 1200px) {
+    .workspace { grid-template-columns: 260px 1fr; }
+    .right-panel { grid-column: 1 / -1; border-top: 1px solid var(--border); }
+  }
+  .panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 10px 14px;
+    background: #141722;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-body {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Stage & Wave Tree */
+  .stage-group {
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+  .stage-title {
+    padding: 8px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    background: #262c42;
+    color: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+  .scene-item {
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .scene-name {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .wave-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: var(--bg-input);
+    color: var(--text);
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .wave-btn:hover {
+    border-color: var(--border);
+    background: #1c2133;
+  }
+  .wave-btn.selected {
+    background: rgba(255, 87, 34, 0.2);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Center Visual Area */
+  .center-panel {
+    display: flex;
+    flex-direction: column;
+    background: #0b0d14;
+    overflow-y: auto;
+    padding: 16px;
+    gap: 14px;
+  }
+  .canvas-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .canvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  canvas#waveCanvas {
+    width: 100%;
+    height: 310px;
+    background: #121521;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: grab;
+    display: block;
+  }
+  canvas#waveCanvas:active { cursor: grabbing; }
+
+  .wave-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .field input, .field select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 9px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+
+  /* Entries Table */
+  .entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .entry-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.12s;
+  }
+  .entry-row:hover { border-color: var(--cyan); }
+  .entry-row.selected {
+    border-color: var(--accent);
+    background: rgba(255, 87, 34, 0.15);
+  }
+  .entry-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .info-alert {
+    background: rgba(0, 229, 255, 0.07);
+    border-left: 3px solid var(--cyan);
+    padding: 9px 12px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    border-radius: 4px;
+    line-height: 1.45;
+  }
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    background: var(--bg-input);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-badge">CPS1 / SNES</span>
+    <div>
+      <h1>Final Fight 1 — Editor Visual de Fases &amp; 3/4 Inimigos</h1>
+      <p>Edite todas as Waves do Bank $87, coordenadas X/Y, tipos de inimigos e alterne entre 4 Inimigos (Sem Glitch) ou 5 Inimigos</p>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="btn" id="btnLanguage" type="button" onclick="toggleLanguage()" title="Switch the editor language">🇧🇷 Português</button>
+    <input type="file" id="romFileInput" accept=".sfc,.smc" style="display:none">
+    <button class="btn btn-primary" onclick="document.getElementById('romFileInput').click()">
+      📂 Carregar ROM (.sfc)
+    </button>
+    <button class="btn btn-success" id="btnSaveRom" disabled onclick="exportModifiedROM()">
+      💾 Salvar ROM (.sfc)
+    </button>
+    <button class="btn" id="btnSaveIps" disabled onclick="exportIPS()">
+      🩹 Exportar Patch (.ips)
+    </button>
+  </div>
+</header>
+
+<div class="mode-bar">
+  <div class="mode-selector">
+    <label class="mode-card" id="cardMode3" onclick="setEnemyMode(3)">
+      <input type="radio" name="enemyMode" id="radioMode3" value="3">
+      <div>
+        <div class="mode-title">
+          Modo Original — 3 Inimigos
+          <span class="badge badge-cyan">Original</span>
+        </div>
+        <div class="mode-desc">
+          Restaura 100% o motor original de 3 inimigos da ROM Uncut.
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-card active-4" id="cardMode4" onclick="setEnemyMode(4)">
+      <input type="radio" name="enemyMode" id="radioMode4" value="4" checked>
+      <div>
+        <div class="mode-title">
+          Modo 4 Inimigos Simultâneos
+          <span class="badge badge-green">Verificado 65816</span>
+        </div>
+        <div class="mode-desc">
+          Ativa o 4º slot (<code>$11E0</code>), limitador de 4 inimigos, proteção de chefes (<code>$0759</code>) e compartilhamento de VRAM/sprites.
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-card" id="cardMode5" onclick="setEnemyMode(5)">
+      <input type="radio" name="enemyMode" id="radioMode5" value="5">
+      <div>
+        <div class="mode-title">
+          Modo 5 Inimigos (Não Suportado pelo SNES)
+          <span class="badge badge-gold">Limite do Hardware</span>
+        </div>
+        <div class="mode-desc">
+          O SNES possui 4 slots de entidade nativos (<code>$1000..$11E0</code>). O quinto slot não é suportado.
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-card active-4" id="cardP2VramBank" style="max-width:340px;">
+      <input type="checkbox" id="chkP2VramBank" checked onchange="setP2VramBank(this.checked)" style="margin-top:3px; transform:scale(1.2); accent-color:var(--green);">
+      <div>
+        <div class="mode-title">
+          Banco Gráfico do P2 p/ 4º Inimigo (1P)
+          <span class="badge badge-green" id="badgeP2Vram">1P Ativo</span>
+        </div>
+        <div class="mode-desc">
+          Usa a área do P2 (VRAM <code>$0A00–$0EFF</code> Página 0, Paleta 1, WRAM <code>$7E:D800</code>) para o 4º inimigo em 1P e restaura itens ao liberar. Em 2P/chefes, volta ao compartilhamento seguro.
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-card" id="cardAutoDup" style="max-width:300px;">
+      <input type="checkbox" id="chkAutoDup" onchange="setAutoDuplication(this.checked)" style="margin-top:3px; transform:scale(1.2); accent-color:var(--accent);">
+      <div>
+        <div class="mode-title">
+          Auto-Preencher Waves (Opcional)
+          <span class="badge badge-purple" id="badgeAutoDup">Manual</span>
+        </div>
+        <div class="mode-desc">
+          Preserva todos os objetos quebráveis (barris, cabines, pneus etc.), libera os 4 inimigos iniciais em todas as dificuldades e compatibiliza slots de VRAM quando necessário.
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-card" id="cardAllEnemiesExpert" style="max-width:340px;">
+      <input type="checkbox" id="chkAllEnemiesExpert" onchange="setAllEnemiesExpert(this.checked)" style="margin-top:3px; transform:scale(1.2); accent-color:var(--purple);">
+      <div>
+        <div class="mode-title">
+          Todos os Inimigos no Expert
+          <span class="badge badge-purple" id="badgeAllEnemiesExpert">Desligado</span>
+        </div>
+        <div class="mode-desc">
+          Adiciona ao Expert os inimigos exclusivos de Easy, Normal ou Hard. Mantem as outras dificuldades, HP e objetos; desativar remove somente o bit que esta opcao acrescentou.
+        </div>
+      </div>
+    </label>
+  </div>
+
+  <div class="status-box" id="romStatusBox">
+    Aguardando carregamento da ROM (<code>Final_Fight_Guy_4_Enemies.sfc</code> ou <code>Final Fight Guy (Japan) uncut.sfc</code>)...
+  </div>
+</div>
+
+<div class="workspace">
+  <!-- LEFT PANEL: Stages & Waves -->
+  <div class="panel">
+    <div class="panel-header">
+      <span>🗺️ Fases, Cenas &amp; Waves</span>
+      <span id="totalWavesBadge" class="badge badge-cyan">0 waves</span>
+    </div>
+    <div class="panel-body" id="stagesTree">
+      <div class="info-alert">
+        Clique em <strong>"📂 Carregar ROM (.sfc)"</strong> no topo e selecione <code>Final_Fight_Guy_4_Enemies.sfc</code> para visualizar e editar todas as fases do jogo.
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER PANEL: Interactive Wave Canvas & Wave Header -->
+  <div class="center-panel">
+    <div class="canvas-card">
+      <div class="canvas-header">
+        <div>
+          <strong id="currentWaveTitle" style="font-size:14px; color:#fff;">Selecione uma Wave à esquerda</strong>
+          <div id="currentWaveMeta" style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+            Arraste os inimigos/objetos diretamente no mapa abaixo para alterar a posição (X, Y)
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span class="badge badge-purple" id="freeSpaceBadge">Bank $87 Livre: -- bytes</span>
+          <button class="btn btn-primary" id="btnAddEnemy" disabled onclick="addEnemyToWave()">➕ Adicionar Inimigo</button>
+          <button class="btn" id="btnCloneEnemy" disabled onclick="duplicateSelectedEnemy()">📋 Clonar Selecionado</button>
+          <button class="btn" id="btnMoveUp" disabled onclick="moveSelectedEntry(-1)" title="Move o item selecionado para nascer antes na fila da wave">⬆️ Subir</button>
+          <button class="btn" id="btnMoveDown" disabled onclick="moveSelectedEntry(1)" title="Move o item selecionado para nascer depois na fila da wave">⬇️ Descer</button>
+          <button class="btn" id="btnAutoExpandStage" disabled onclick="autoExpandAllWavesInCurrentStage()" style="background:#2e7d32; color:#fff;" title="Preenche waves desta fase até o limite do modo ativo (3 ou 4 entradas de inimigos)">⚡ Auto-Completar Fase (3/4)</button>
+          <button class="btn btn-danger" id="btnDeleteEnemy" disabled onclick="deleteSelectedEnemy()">🗑️ Remover</button>
+        </div>
+      </div>
+
+      <canvas id="waveCanvas" width="900" height="310"></canvas>
+    </div>
+
+    <div class="wave-settings-grid" id="waveHeaderForm" style="opacity:0.5; pointer-events:none;">
+      <div class="field">
+        <label>Gatilho Câmera X (Trigger X Hex)</label>
+        <input type="text" id="inpTrigX" onchange="updateWaveHeaderFromUI()">
+      </div>
+      <div class="field">
+        <label>Trava Câmera X (Lock X Hex)</label>
+        <input type="text" id="inpLockX" onchange="updateWaveHeaderFromUI()">
+      </div>
+      <div class="field">
+        <label>Seta "GO!" ao Limpar ($168D: 0 ou 1)</label>
+        <input type="number" id="inpKillCount" min="0" max="1" onchange="updateWaveHeaderFromUI()">
+      </div>
+      <div class="field">
+        <label>Inimigos na Wave ($168C / $1696)</label>
+        <input type="number" id="inpEntryCount" min="0" max="255" readonly style="opacity:0.75;">
+      </div>
+      <div class="field" style="justify-content:flex-end;">
+        <button class="btn" onclick="syncKillCountToEnemies()" title="Recalcula o contador de inimigos ($168C/$1696) no cabeçalho da wave">
+          🔄 Recalcular Contagem ($168C)
+        </button>
+      </div>
+    </div>
+
+    <div class="canvas-card" style="flex:1;">
+      <div class="canvas-header">
+        <div>
+          <strong>👾 Lista de Inimigos e Objetos nesta Wave</strong>
+          <div id="waveDiffSummary" style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">Clique em um item para editar à direita</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="selDiffView" style="font-size:11.5px; color:var(--text-muted);">Visualizar dificuldade:</label>
+          <select id="selDiffView" onchange="onDiffViewChange()" style="background:var(--bg-input); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:5px; font-size:11.5px;">
+            <option value="0x20" selected>Destacar Normal (padrão do jogo)</option>
+            <option value="all">Todas (sem destaque)</option>
+            <option value="0x10">Destacar Easy</option>
+            <option value="0x40">Destacar Hard</option>
+            <option value="0x80">Destacar Expert</option>
+          </select>
+        </div>
+      </div>
+      <div class="entries-list" id="waveEntriesList"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Selected Enemy / Object Inspector -->
+  <div class="panel right-panel" style="border-right:none; border-left:1px solid var(--border);">
+    <div class="panel-header">
+      <span>⚙️ Propriedades do Inimigo / Objeto</span>
+      <span id="selectedEntryBadge" class="badge badge-gold">Nenhum</span>
+    </div>
+    <div class="panel-body" id="inspectorPanel" style="opacity:0.45; pointer-events:none; display:flex; flex-direction:column; gap:12px;">
+      <div class="field">
+        <label>Personagem / Objeto (ID na Tabela $82:D1C8)</label>
+        <select id="selEnemyId" onchange="updateSelectedEntryFromUI()"></select>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="field">
+          <label>Modo de Posição X</label>
+          <select id="selXMode" onchange="onXModeChange()">
+            <option value="rel_right">Relativo à Câmera (Direita $8220)</option>
+            <option value="rel_left">Relativo à Câmera (Esquerda $80E0)</option>
+            <option value="rel_custom">Relativo à Câmera (Custom >= $8000)</option>
+            <option value="abs">Coordenada X Absoluta do Mapa</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Valor X (Hex, ex: 0x8220 ou 0x02D0)</label>
+          <input type="text" id="inpSpawnX" onchange="updateSelectedEntryFromUI()">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="field">
+          <label>Posição Y / Profundidade (0x0020..0x0058)</label>
+          <input type="text" id="inpSpawnY" onchange="updateSelectedEntryFromUI()">
+        </div>
+        <div class="field">
+          <label>Delay de Entrada (Frames, 60 = 1 seg)</label>
+          <input type="number" id="inpDelay" min="1" max="4095" onchange="updateSelectedEntryFromUI()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Animação / Modo de Entrada (+$07)</label>
+        <select id="selSpawnMode" onchange="updateSelectedEntryFromUI(true)">
+          <option value="0x00">0x00 — Caminhando para a tela (Padrão)</option>
+          <option value="0x02">0x02 — Parado esperando no cenário</option>
+          <option value="0x04">0x04 — Agachado / Sentado levantando</option>
+          <option value="0x06">0x06 — Pulando de cima (Jump Down)</option>
+          <option value="0x08">0x08 — Saindo de porta / fundo (Doorway)</option>
+          <option value="0x0C">0x0C — Correndo / Investida rápida</option>
+          <option value="0x18">0x18 — Entrada Especial / Rolando</option>
+          <option value="0x80">0x80 — Objeto: Drop Aleatório 0</option>
+          <option value="0x81">0x81 — Objeto: Drop Comida / Item ($81)</option>
+          <option value="0x85">0x85 — Objeto: Drop Comida / Arma ($85)</option>
+          <option value="0x87">0x87 — Objeto: Drop Pontos / Item ($87)</option>
+          <option value="0x8A">0x8A — Objeto: Drop Pontos / Ouro ($8A)</option>
+          <option value="0x8E">0x8E — Objeto: Drop Vida / Frango ($8E)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Byte Bruto de Entrada (+$07 Hex)</label>
+        <input type="text" id="inpSpawnModeHex" onchange="updateSelectedEntryFromHexMode()">
+      </div>
+
+      <div class="field" id="diffFieldGroup">
+        <label id="lblDiffField">Dificuldades em que Aparece (Bits 4..7 de +$08)</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-label"><input type="checkbox" id="chkDiffEasy" onchange="updateSelectedEntryFromUI()"> Easy (0x10)</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkDiffNorm" onchange="updateSelectedEntryFromUI()"> Normal (0x20)</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkDiffHard" onchange="updateSelectedEntryFromUI()"> Hard (0x40)</label>
+          <label class="checkbox-label"><input type="checkbox" id="chkDiffExp" onchange="updateSelectedEntryFromUI()"> Expert (0x80)</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nível de HP / Agressividade IA (Bits 0..3 de +$08: 0 a 15)</label>
+        <input type="number" id="inpHpLevel" min="0" max="15" onchange="updateSelectedEntryFromUI()">
+      </div>
+
+      <div class="info-alert" id="vramBehaviorNote">
+        💡 <strong>Banco Gráfico do 4º Inimigo (1P):</strong> Quando <strong>Banco Gráfico do P2 (1P)</strong> está ativado no Modo 4, o 4º inimigo em 1P recebe banco dedicado na Página 0 (VRAM <code>$0A00–$0EFF</code>, 80 tiles), Paleta OBJ 1 (<code>$0520</code>) e metasprites em <code>$7E:D800–$7E:F7FF</code>, restaurando os tiles de comida (<code>$10:F020</code> via <code>$80:8999</code>) ao liberar o slot. Em 2P ou com chefes ativos, o motor volta automaticamente ao compartilhamento seguro na Página 1.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// TABELA DE INIMIGOS E OBJETOS ($82:D1C8 — Byte Offset Múltiplo de 3)
+// ============================================================================
+const ENEMY_CATALOG = [
+  { id: 0x00, name: "Bred (Inimigo — Fam. Bred)", category: "enemy", color: "#4fc3f7", dynamicDma: true },
+  { id: 0x03, name: "Dug (Inimigo — Fam. Bred)", category: "enemy", color: "#29b6f6", dynamicDma: true },
+  { id: 0x06, name: "Jake (Inimigo — Fam. Bred)", category: "enemy", color: "#039be5", dynamicDma: true },
+  { id: 0x09, name: "Simons (Inimigo — Fam. Bred)", category: "enemy", color: "#00e5ff", dynamicDma: true },
+  { id: 0x0C, name: "J (Inimigo — Fam. J/Two.P)", category: "enemy", color: "#ffca28", dynamicDma: true },
+  { id: 0x0F, name: "Two.P (Inimigo — Fam. J/Two.P)", category: "enemy", color: "#ffa726", dynamicDma: true },
+  { id: 0x12, name: "Axl (Guarda — Fam. Axl)", category: "enemy", color: "#ef5350", dynamicDma: true },
+  { id: 0x15, name: "Slash (Guarda — Fam. Axl)", category: "enemy", color: "#e53935", dynamicDma: true },
+  { id: 0x18, name: "Andore Jr. (Gigante — Fam. Andore)", category: "enemy", color: "#ff7043", dynamicDma: true },
+  { id: 0x1B, name: "Andore (Gigante — Fam. Andore)", category: "enemy", color: "#ff5722", dynamicDma: true },
+  { id: 0x1E, name: "G. Andore (Gigante — Fam. Andore)", category: "enemy", color: "#e64a19", dynamicDma: true },
+  { id: 0x21, name: "U. Andore (Gigante — Fam. Andore)", category: "enemy", color: "#d84315", dynamicDma: true },
+  { id: 0x24, name: "F. Andore (Gigante — Fam. Andore)", category: "enemy", color: "#bf360c", dynamicDma: true },
+  { id: 0x27, name: "G. Oriber (Gordo — Fam. Oriber)", category: "enemy", color: "#ab47bc", dynamicDma: true },
+  { id: 0x2A, name: "Bill Bull (Gordo — Fam. Oriber)", category: "enemy", color: "#8e24aa", dynamicDma: true },
+  { id: 0x2D, name: "Wong Who (Gordo — Fam. Oriber)", category: "enemy", color: "#ba68c8", dynamicDma: true },
+  { id: 0x30, name: "Holly Wood (Faca — Fam. Holly Wood)", category: "enemy", color: "#ff5252", dynamicDma: true },
+  { id: 0x33, name: "El Gado (Faca — Fam. Holly Wood)", category: "enemy", color: "#d50000", dynamicDma: true },
+  { id: 0x36, name: "Roxy (Acrobata — Fam. Roxy/Poison)", category: "enemy", color: "#ec407a", dynamicDma: true },
+  { id: 0x39, name: "Poison (Acrobata — Fam. Roxy/Poison)", category: "enemy", color: "#f06292", dynamicDma: true },
+  { id: 0x3C, name: "Holly Wood Especial ($3C — Fam. $0E)", category: "enemy", color: "#ffd54f", dynamicDma: true },
+  { id: 0x3F, name: "Holly Wood Molotov ($3F — Fam. $10)", category: "enemy", color: "#ff3d00", dynamicDma: true },
+  { id: 0x57, name: "Objeto: Tambor de Óleo ($57)", category: "object", color: "#8d6e63", dynamicDma: false },
+  { id: 0x5A, name: "Objeto: Vaso / Barril Up Town ($5A)", category: "object", color: "#a1887f", dynamicDma: false },
+  { id: 0x60, name: "Objeto: Pneu ($60)", category: "object", color: "#90a4ae", dynamicDma: false },
+  { id: 0x63, name: "Objeto: Cabine Telefônica ($63)", category: "object", color: "#78909c", dynamicDma: false },
+  { id: 0x66, name: "Objeto: Tambor Metálico / Caixa ($66)", category: "object", color: "#b0bec5", dynamicDma: false },
+  { id: 0x69, name: "Objeto: Placa / Obstáculo ($69)", category: "object", color: "#cfd8dc", dynamicDma: false },
+  { id: 0x6C, name: "Objeto: Barril de Madeira ($6C)", category: "object", color: "#bcaaa4", dynamicDma: false },
+  { id: 0x72, name: "Objeto: Lustre / Armadilha ($72)", category: "object", color: "#ffe082", dynamicDma: false }
+];
+
+const STAGE_DEFINITIONS = [
+  { index: 0, name: "Fase 1 — Slum (Subúrbio)", sceneCount: 3 },
+  { index: 1, name: "Fase 2 — Subway & Park (Metrô)", sceneCount: 4 },
+  { index: 2, name: "Fase 3 — West Side (Distrito)", sceneCount: 3 },
+  { index: 3, name: "Fase 4 — Industrial Area (Fábrica)", sceneCount: 3 },
+  { index: 4, name: "Fase 5 — Bay Area (Beira-Mar)", sceneCount: 1 },
+  { index: 5, name: "Fase 6 — Up Town (Mansão Belger)", sceneCount: 4 }
+];
+
+const GUY_OVERRIDES = [
+  { stageIdx: 0, sceneIdx: 2, ptr: 0xC570, name: "Cena 3 (Modo Final Fight Guy — $87:C570)" },
+  { stageIdx: 1, sceneIdx: 1, ptr: 0xC630, name: "Cena 2 Metrô (Modo Final Fight Guy — $87:C630)" }
+];
+
+const BANK87_SAFE_RANGES = [
+  [0x03DA60, 0x03DEB0],
+  [0x03D430, 0x03D620],
+  [0x03CA40, 0x03CBFF],
+  [0x03F640, 0x03F7F0],
+  [0x03CD80, 0x03CEFF]
+];
+const BANK87_RELOCATION_MAGIC = [0x57, 0x56]; // "WV", ignorado pelo jogo; marca um bloco de scene realocada
+const WAVE_EXPANSION_RESERVE_ENTRIES = 8;
+
+let romBytes = null;
+let originalRomBytes = null;
+let romFileName = "Final_Fight_Guy_4_Enemies.sfc";
+let activeEnemyMode = 4;
+let activeP2VramBank = true;
+let expertRosterAddedOffsets = null;
+let parsedStages = [];
+let selectedStage = null;
+let selectedWave = null;
+let selectedEntryIndex = -1;
+let draggingEntryIndex = -1;
+let activeDiffView = 0x20; // 0x20 = Normal (padrão do jogo); 0 = Todas sem destaque
+
+const LANGUAGE_PAIRS = [
+  ["Final Fight SNES — Editor Visual de Fases, Waves & 3/4 Inimigos", "Final Fight SNES — Stage, Wave & Enemy Editor"],
+  ["Final Fight 1 — Editor Visual de Fases & 3/4 Inimigos", "Final Fight 1 — Stage & Enemy Editor"],
+  ["Edite todas as Waves do Bank $87, coordenadas X/Y, tipos de inimigos e alterne entre 4 Inimigos (Sem Glitch) ou 5 Inimigos", "Edit Bank $87 waves, X/Y coordinates and enemy types. Switch between 3- and 4-enemy modes."],
+  ["Carregar ROM (.sfc)", "Load ROM (.sfc)"],
+  ["Salvar ROM (.sfc)", "Save ROM (.sfc)"],
+  ["Exportar Patch (.ips)", "Export Patch (.ips)"],
+  ["Modo Original — 3 Inimigos", "Original Mode — 3 Enemies"],
+  ["Restaura 100% o motor original de 3 inimigos da ROM Uncut.", "Restores the original 3-enemy engine from the uncut ROM."],
+  ["Modo 4 Inimigos Simultâneos", "4 Simultaneous Enemies"],
+  ["Verificado 65816", "65816 verified"],
+  ["Ativa o 4º slot (", "Enables slot 4 ("],
+  ["), limitador de 4 inimigos, proteção de chefes (", "), the 4-enemy limiter, boss protection ("],
+  [") e compartilhamento de VRAM/sprites.", ") and VRAM/sprite sharing."],
+  ["Modo 5 Inimigos (Não Suportado pelo SNES)", "5-Enemy Mode (Not Supported by the SNES)"],
+  ["Limite do Hardware", "Hardware Limit"],
+  ["O SNES possui 4 slots de entidade nativos (", "The SNES has 4 native entity slots ("],
+  ["). O quinto slot não é suportado.", "). A fifth slot is not supported."],
+  ["Banco Gráfico do P2 p/ 4º Inimigo (1P)", "Use P2 Graphics Bank for 4th Enemy (1P)"],
+  ["1P Ativo", "1P Enabled"],
+  ["Usa a área do P2 (VRAM", "Uses the P2 area (VRAM"],
+  ["Página 0, Paleta 1, WRAM", "Page 0, Palette 1, WRAM"],
+  [") para o 4º inimigo em 1P e restaura itens ao liberar. Em 2P/chefes, volta ao compartilhamento seguro.", ") for the 4th enemy in 1P and restores item graphics when the slot is freed. In 2P or during boss fights, it falls back to safe sharing."],
+  ["Auto-Preencher Waves (Opcional)", "Auto-Fill Waves (Optional)"],
+  ["Preserva todos os objetos quebráveis (barris, cabines, pneus etc.), libera os 4 inimigos iniciais em todas as dificuldades e compatibiliza slots de VRAM quando necessário.", "Preserves breakable objects (barrels, phone booths, tires, etc.), enables the first four enemies at every difficulty, and adjusts VRAM slot sharing when needed."],
+  ["Todos os Inimigos no Expert", "All Enemies on Expert"],
+  ["Adiciona ao Expert os inimigos exclusivos de Easy, Normal ou Hard. Mantem as outras dificuldades, HP e objetos; desativar remove somente o bit que esta opcao acrescentou.", "Adds Easy-, Normal- or Hard-only enemies to Expert. Keeps the other difficulty settings, HP and objects; turning it off removes only the bit this option added."],
+  ["Desligado", "Off"],
+  ["Aguardando carregamento da ROM (", "Waiting for a ROM to load ("],
+  [" ou ", " or "],
+  [")...", ")..."],
+  ["Fases, Cenas & Waves", "Stages, Scenes & Waves"],
+  ["Clique em", "Click"],
+  ["no topo e selecione", "at the top and choose"],
+  ["para visualizar e editar todas as fases do jogo.", "to view and edit every stage in the game."],
+  ["Selecione uma Wave à esquerda", "Select a wave on the left"],
+  ["Arraste os inimigos/objetos diretamente no mapa abaixo para alterar a posição (X, Y)", "Drag enemies or objects on the map below to change their position (X, Y)"],
+  ["Bank $87 Livre: -- bytes", "Bank $87 Free: -- bytes"],
+  ["Adicionar Inimigo", "Add Enemy"],
+  ["Clonar Selecionado", "Clone Selected"],
+  ["Subir", "Move Up"],
+  ["Descer", "Move Down"],
+  ["Auto-Completar Fase (3/4)", "Auto-Fill Stage (3/4)"],
+  ["Remover", "Remove"],
+  ["Gatilho Câmera X (Trigger X Hex)", "Camera Trigger X (Hex)"],
+  ["Trava Câmera X (Lock X Hex)", "Camera Lock X (Hex)"],
+  ["Seta \"GO!\" ao Limpar ($168D: 0 ou 1)", "\"GO!\" Arrow on Clear ($168D: 0 or 1)"],
+  ["Inimigos na Wave ($168C / $1696)", "Enemies in Wave ($168C / $1696)"],
+  ["Recalcular Contagem ($168C)", "Recalculate Count ($168C)"],
+  ["Lista de Inimigos e Objetos nesta Wave", "Enemies and Objects in This Wave"],
+  ["Clique em um item para editar à direita", "Select an entry to edit it on the right"],
+  ["Visualizar dificuldade:", "Difficulty view:"],
+  ["Destacar Normal (padrão do jogo)", "Highlight Normal (game default)"],
+  ["Todas (sem destaque)", "All (no highlight)"],
+  ["Destacar Easy", "Highlight Easy"],
+  ["Destacar Hard", "Highlight Hard"],
+  ["Destacar Expert", "Highlight Expert"],
+  ["Propriedades do Inimigo / Objeto", "Enemy / Object Properties"],
+  ["Nenhum", "None"],
+  ["Personagem / Objeto (ID na Tabela $82:D1C8)", "Character / Object (ID in Table $82:D1C8)"],
+  ["Modo de Posição X", "X Position Mode"],
+  ["Relativo à Câmera (Direita $8220)", "Camera-Relative (Right $8220)"],
+  ["Relativo à Câmera (Esquerda $80E0)", "Camera-Relative (Left $80E0)"],
+  ["Coordenada X Absoluta do Mapa", "Absolute Map X Coordinate"],
+  ["Valor X (Hex, ex: 0x8220 ou 0x02D0)", "X Value (Hex, e.g. 0x8220 or 0x02D0)"],
+  ["Posição Y / Profundidade (0x0020..0x0058)", "Y Position / Depth (0x0020..0x0058)"],
+  ["Delay de Entrada (Frames, 60 = 1 seg)", "Spawn Delay (Frames, 60 = 1 sec)"],
+  ["Animação / Modo de Entrada (+$07)", "Animation / Spawn Mode (+$07)"],
+  ["Caminhando para a tela (Padrão)", "Walking onto screen (Default)"],
+  ["Parado esperando no cenário", "Standing idle in the scene"],
+  ["Agachado / Sentado levantando", "Crouching / getting up from sitting"],
+  ["Pulando de cima (Jump Down)", "Jumping down"],
+  ["Saindo de porta / fundo (Doorway)", "Entering from doorway / background"],
+  ["Correndo / Investida rápida", "Running / fast charge"],
+  ["Entrada Especial / Rolando", "Special entry / rolling"],
+  ["Objeto: Drop Aleatório 0", "Object: Random Drop 0"],
+  ["Objeto: Drop Comida / Item ($81)", "Object: Food / Item Drop ($81)"],
+  ["Objeto: Drop Comida / Arma ($85)", "Object: Food / Weapon Drop ($85)"],
+  ["Objeto: Drop Pontos / Item ($87)", "Object: Points / Item Drop ($87)"],
+  ["Objeto: Drop Pontos / Ouro ($8A)", "Object: Points / Gold Drop ($8A)"],
+  ["Objeto: Drop Vida / Frango ($8E)", "Object: Health / Chicken Drop ($8E)"],
+  ["Byte Bruto de Entrada (+$07 Hex)", "Raw Spawn Byte (+$07 Hex)"],
+  ["Dificuldades em que Aparece (Bits 4..7 de +$08)", "Difficulties Where It Appears (Bits 4–7 of +$08)"],
+  ["Nível de HP / Agressividade IA (Bits 0..3 de +$08: 0 a 15)", "HP / AI Aggression Level (Bits 0–3 of +$08: 0 to 15)"],
+  ["Banco Gráfico do 4º Inimigo (1P):", "4th Enemy Graphics Bank (1P):"],
+  ["Quando", "When"],
+  ["Banco Gráfico do P2 (1P)", "P2 Graphics Bank (1P)"],
+  ["está ativado no Modo 4, o 4º inimigo em 1P recebe banco dedicado na Página 0 (VRAM", "is enabled in Mode 4, the 4th enemy in 1P gets a dedicated bank on Page 0 (VRAM"],
+  [", 80 tiles), Paleta OBJ 1 (", ", 80 tiles), OBJ Palette 1 ("],
+  [") e metasprites em", ") and metasprites in"],
+  [", restaurando os tiles de comida (", ", restoring food tiles ("],
+  [" via ", " via "],
+  [") ao liberar o slot. Em 2P ou com chefes ativos, o motor volta automaticamente ao compartilhamento seguro na Página 1.", ") when the slot is freed. In 2P or during boss fights, the engine returns to safe sharing on Page 1."],
+  ["Câmera X:", "Camera X:"],
+  ["Spawn Esq", "Left Spawn"],
+  ["Spawn Dir", "Right Spawn"],
+  ["Tela SNES Travada", "SNES Viewport"],
+  ["Modo ativo: 4 inimigos (experimental)", "Active mode: 4 enemies (experimental)"],
+  ["Modo ativo: original (3 inimigos)", "Active mode: original (3 enemies)"],
+  ["Modo: 4 inimigos + Banco P2 (1P)", "Mode: 4 enemies + P2 bank (1P)"],
+  ["Modo: 4 inimigos (compartilhamento)", "Mode: 4 enemies (shared graphics)"],
+  ["Modo: original (3 inimigos)", "Mode: original (3 enemies)"],
+  ["Fase 1 — Slum (Subúrbio)", "Stage 1 — Slum (Suburb)"],
+  ["Fase 2 — Subway & Park (Metrô)", "Stage 2 — Subway & Park"],
+  ["Fase 3 — West Side (Distrito)", "Stage 3 — West Side (District)"],
+  ["Fase 4 — Industrial Area (Fábrica)", "Stage 4 — Industrial Area (Factory)"],
+  ["Fase 5 — Bay Area (Beira-Mar)", "Stage 5 — Bay Area"],
+  ["Fase 6 — Up Town (Mansão Belger)", "Stage 6 — Up Town (Belger's Mansion)"],
+  ["Cena 3 (Modo Final Fight Guy — $87:C570)", "Scene 3 (Final Fight Guy Mode — $87:C570)"],
+  ["Cena 2 Metrô (Modo Final Fight Guy — $87:C630)", "Metro Scene 2 (Final Fight Guy Mode — $87:C630)"],
+  ["Cena ", "Scene "],
+  ["Fase ", "Stage "],
+  ["Inimigos", "Enemies"],
+  ["inimigos", "enemies"],
+  ["inimigo", "enemy"],
+  ["Inimigo", "Enemy"],
+  ["Objetos", "Objects"],
+  ["objetos", "objects"],
+  ["Objeto:", "Object:"],
+  ["Objeto", "Object"],
+  ["Dificuldades", "Difficulties"],
+  ["dificuldades", "difficulties"],
+  ["Todas", "All"],
+  ["Só ", "Only "],
+  ["Objeto (Sempre)", "Object (Always)"],
+  ["registros na ROM", "records in ROM"],
+  ["nascem no", "spawn on"],
+  ["Clique em um item para editar à direita", "Select an entry to edit it on the right"],
+  ["Capacidade:", "Capacity:"],
+  ["Trigger X:", "Trigger X:"],
+  ["Lock Câmera X:", "Camera Lock X:"],
+  ["Seta GO! ($168D):", "GO! flag ($168D):"],
+  ["Delay:", "Delay:"],
+  ["Drop/Val:", "Drop/Value:"],
+  ["Banco Gráfico do P2 (1P) ativado: 4º inimigo usa VRAM $0A00–$0EFF (Página 0), Paleta 1 e WRAM $7E:D800.", "P2 Graphics Bank (1P) enabled: the 4th enemy uses VRAM $0A00–$0EFF (Page 0), Palette 1 and WRAM $7E:D800."],
+  ["Banco Gráfico do P2 desativado: 4º inimigo usa compartilhamento clássico na Página 1 (idêntico à ROM de referência).", "P2 Graphics Bank disabled: the 4th enemy uses classic sharing on Page 1 (same as the reference ROM)."],
+  ["Só Modo 4", "Mode 4 only"],
+  ["Não foi possível adicionar as entradas excedentes.", "Could not add the extra entries."],
+  ["o cabeçalho da ROM aceita no máximo 255 entradas/inimigos nesta wave.", "the ROM header supports at most 255 entries/enemies in this wave."],
+  ["não há uma área contínua segura em Bank $87 para copiar a cena inteira", "there is no safe contiguous area in Bank $87 for the full scene copy"],
+  ["esta wave usa um script especial de Final Fight Guy sem ponteiro de tabela conhecido.", "this wave uses a special Final Fight Guy script with no known table pointer."],
+  ["o fim do script desta cena não pôde ser validado.", "the end of this scene script could not be validated."],
+  ["a posição do ponteiro desta cena está fora da ROM.", "this scene pointer is outside the ROM."],
+  ["a wave original", "the original wave"],
+  ["Selecione uma fase primeiro na árvore à esquerda!", "Select a stage in the tree on the left first!"],
+  ["Auto-Preencher aplicado:", "Auto-Fill applied:"],
+  ["waves ajustadas", "waves updated"],
+  ["cópias inseridas", "copies added"],
+  ["waves sem área segura para expansão", "waves with no safe expansion space"],
+  ["Modo", "Mode"],
+  ["ativo", "active"],
+  ["Exportada:", "Exported:"],
+  ["Patch exportado:", "Patch exported:"],
+  ["com família compartilhada", "using shared graphics"],
+  ["todos os objetos quebráveis preservados", "all breakable objects preserved"],
+  ["removidos", "removed"],
+  ["spawns de inimigos", "enemy spawns"],
+  ["em todas as dificuldades", "at every difficulty"],
+  ["Dificuldade (Objetos sempre aparecem — bits 4..7 = 0)", "Difficulty (objects always appear — bits 4–7 = 0)"],
+  ["Dificuldades em que Aparece (Bits 4..7 de +$08)", "Difficulties Where It Appears (Bits 4–7 of +$08)"],
+  ["Todas (E/N/H/X)", "All (E/N/H/X)"],
+  ["ROM Carregada:", "ROM loaded:"],
+  ["ROM Carregada", "ROM loaded"],
+  ["waves", "waves"],
+  [" bytes", " bytes"],
+  ["Custom", "Custom"],
+  ["ID Custom", "Custom ID"],
+  ["Inimigo — DMA Dinâmico", "Enemy — Dynamic DMA"],
+  ["Inimigo — VRAM Estática", "Enemy — Static VRAM"],
+  ["Inimigo — VRAM Estática", "Enemy — Static VRAM"],
+  ["Gigante", "Giant"],
+  ["Acrobata", "Acrobat"],
+  ["Sub-chefe", "Sub-boss"],
+  ["Faca", "Knife"],
+  ["Guarda", "Guard"],
+  ["Gordo", "Heavy"],
+  ["Fábrica", "Factory"],
+  ["Metálico", "Metal"],
+  ["Quebrável", "Breakable"],
+  ["Calçada", "Sidewalk"],
+  ["Rua", "Street"],
+  ["Parede/Fundo", "Wall/Background"],
+  ["Relativo", "Relative"],
+  ["Absoluta", "Absolute"],
+  ["Frames", "Frames"],
+  ["Padrão", "Default"],
+  ["Carregado", "Loaded"],
+  ["Ativo", "Enabled"],
+  ["Desativado", "Disabled"],
+  ["Manual", "Manual"],
+  ["Exportada", "Exported"],
+  ["Patch exportado", "Patch exported"],
+  ["Câmera", "Camera"],
+  ["Câmera", "Camera"],
+  ["Câmera", "Camera"],
+  ["Nenhum", "None"],
+  ["Selecionado", "Selected"],
+  ["Selecione", "Select"],
+  ["selecionado", "selected"],
+  ["Removidos", "Removed"],
+  ["removidos", "removed"],
+  ["Modo original", "Original mode"],
+  ["Modo", "Mode"],
+  ["4 inimigos", "4 enemies"],
+  ["3 inimigos", "3 enemies"],
+  ["inimigos simultâneos", "simultaneous enemies"],
+  ["Fam.", "Family"],
+  ["Modo 5 inimigos indisponível: não existe bloco de RAM seguro para o quinto slot. Voltando ao modo original de 3 inimigos.", "5-enemy mode is unavailable: there is no safe RAM block for a fifth slot. Returning to the original 3-enemy mode."],
+  [" com família/tipo compartilhado", " with shared family/type"],
+  [" objetos quebráveis preservados", " breakable objects preserved"],
+  ["não foi possível reservar espaço adicional para esta wave.", "could not reserve extra space for this wave."],
+  ["Expert ativado:", "Expert enabled:"],
+  ["Expert desativado:", "Expert disabled:"],
+  ["inimigos receberam essa dificuldade", "enemies were assigned this difficulty"],
+  ["spawns aparecem no Expert", "spawns appear on Expert"],
+  ["Desativar remove somente os bits adicionados por esta opcao.", "Turning this off removes only the bits this option added."],
+  ["bits adicionados por esta opcao foram removidos.", "bits added by this option were removed."],
+  ["inimigos duplicados", "enemies duplicated"],
+  ["waves sem espaço seguro para expansão", "waves with no safe expansion space"],
+  ["só em outras dificuldades", "only on other difficulties"],
+  ["original de 3 inimigos", "original 3-enemy mode"],
+  ["Tambor de \u00d3leo", "Oil Drum"],
+  ["Vaso / Barril Up Town", "Vase / Up Town Barrel"],
+  ["Cabine Telef\u00f4nica", "Phone Booth"],
+  ["Tambor Met\u00e1lico / Caixa", "Metal Drum / Crate"],
+  ["Placa / Obst\u00e1culo", "Sign / Obstacle"],
+  ["Barril de Madeira", "Wooden Barrel"],
+  ["Lustre / Armadilha", "Chandelier / Trap"],
+  ["Holly Wood Especial", "Special Holly Wood"],
+  ["Relativo \u00e0 C\u00e2mera (Custom >= $8000)", "Camera-Relative (Custom >= $8000)"],
+  ["ativo", "active"],
+  ["ativa", "active"],
+  ["barril", "barrel"],
+  ["cabine", "phone booth"],
+  ["pneu", "tire"],
+  ["Seletor de dificuldade", "Difficulty filter"],
+  ["(padrão do jogo)", "(game default)"],
+  ["Clique para", "Click to"],
+  ["ao Limpar", "on Clear"],
+  ["na Wave", "in Wave"],
+  ["Nível", "Level"],
+  ["Posição", "Position"],
+  ["Entrada", "Spawn"],
+  ["Animacao", "Animation"],
+  ["Limite", "Limit"],
+  ["seguro", "safe"],
+  ["diferentes", "different"],
+  ["depois", "after"],
+  ["antes", "before"],
+  ["Move o item selecionado para nascer antes na fila da wave", "Move the selected entry earlier in the wave spawn queue"],
+  ["Move o item selecionado para nascer depois na fila da wave", "Move the selected entry later in the wave spawn queue"],
+  ["Preenche waves desta fase até o limite do modo ativo (3 ou 4 entradas de inimigos)", "Fills this stage's waves up to the active mode limit (3 or 4 enemy entries)"]
+];
+
+let currentLanguage = "en";
+const LANGUAGE_PAIRS_SORTED = [...LANGUAGE_PAIRS].sort((a, b) => Math.max(b[0].length, b[1].length) - Math.max(a[0].length, a[1].length));
+
+function translateText(value, language = currentLanguage) {
+  let output = String(value);
+  for (const [portuguese, english] of LANGUAGE_PAIRS_SORTED) {
+    const from = language === "en" ? portuguese : english;
+    const to = language === "en" ? english : portuguese;
+    if (from && from !== to && output.includes(from)) output = output.split(from).join(to);
+  }
+  return output;
+}
+
+function translateNode(node) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const value = translateText(node.nodeValue);
+    if (value !== node.nodeValue) node.nodeValue = value;
+    return;
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE || node.tagName === "SCRIPT" || node.tagName === "STYLE") return;
+  if (node === document.documentElement) return;
+  if (node.matches?.("[title], [placeholder], [aria-label]")) {
+    for (const attr of ["title", "placeholder", "aria-label"]) {
+      if (node.hasAttribute(attr)) node.setAttribute(attr, translateText(node.getAttribute(attr)));
+    }
+  }
+  for (const child of node.childNodes) translateNode(child);
+}
+
+function setLanguage(language) {
+  currentLanguage = language === "pt" ? "pt" : "en";
+  document.documentElement.lang = currentLanguage === "en" ? "en" : "pt-BR";
+  document.title = translateText(document.title, currentLanguage);
+  translateNode(document.body);
+  const button = document.getElementById("btnLanguage");
+  if (button) {
+    button.textContent = currentLanguage === "en" ? "🇧🇷 Português" : "🇺🇸 English";
+    button.title = currentLanguage === "en" ? "Switch the editor language" : "Alterar o idioma do editor";
+  }
+  try { localStorage.setItem("finalFightEditorLanguage", currentLanguage); } catch (_) { /* file:// may disable storage */ }
+  drawWaveCanvas();
+}
+
+function toggleLanguage() {
+  setLanguage(currentLanguage === "en" ? "pt" : "en");
+}
+
+const languageObserver = new MutationObserver(records => {
+  for (const record of records) {
+    if (record.type === "characterData") translateNode(record.target);
+    else record.addedNodes.forEach(translateNode);
+  }
+});
+languageObserver.observe(document.body, { subtree: true, childList: true, characterData: true });
+try {
+  const savedLanguage = localStorage.getItem("finalFightEditorLanguage");
+  if (savedLanguage === "pt" || savedLanguage === "en") currentLanguage = savedLanguage;
+} catch (_) { /* English is the default when storage is unavailable */ }
+// Populate enemy select dropdown
+const selEnemyId = document.getElementById("selEnemyId");
+ENEMY_CATALOG.forEach(item => {
+  const opt = document.createElement("option");
+  opt.value = item.id;
+  opt.textContent = `0x${item.id.toString(16).toUpperCase().padStart(2,'0')} — ${item.name}`;
+  selEnemyId.appendChild(opt);
+});
+
+function getEnemyInfo(id) {
+  const found = ENEMY_CATALOG.find(e => e.id === id);
+  if (found) return found;
+  const isEnemy = romBytes && romBytes[0x0151C8 + id] === 0x02;
+  return {
+    id,
+    name: `ID Custom 0x${id.toString(16).toUpperCase().padStart(2,'0')} (${isEnemy ? 'Inimigo' : 'Objeto'})`,
+    category: isEnemy ? "enemy" : "object",
+    color: isEnemy ? "#26c6da" : "#90a4ae",
+    dynamicDma: false
+  };
+}
+
+function read16(buf, off) {
+  return buf[off] | (buf[off + 1] << 8);
+}
+function write16(buf, off, val) {
+  buf[off] = val & 0xFF;
+  buf[off + 1] = (val >> 8) & 0xFF;
+}
+function bank87PointerToOffset(ptr) {
+  return 0x038000 + (ptr & 0x7FFF);
+}
+function bank87OffsetToPointer(off) {
+  if (off < 0x038000 || off >= 0x040000) return -1;
+  return 0x8000 | (off - 0x038000);
+}
+function toHex16(val) {
+  return "0x" + (val & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+}
+
+// ============================================================================
+// CARREGAMENTO DA ROM E PARSER COMPLETO DO BANK $87
+// ============================================================================
+
+// ============================================================================
+// MOTOR NATIVO 4 INIMIGOS (ALLOCATOR, LIMITADOR, LOOP DINÂMICO E GUARDA DO SLOT 4)
+// ============================================================================
+const NATIVE_ENGINE_RESTORE = [
+  // 1. Desfaz qualquer alocador antigo em Bank 80 ($80:AC27, inclusive os 3 bytes adjacentes 0x2C42..0x2C44)
+  { offset: 0x002C27, hex: "a20010bd0000f012a2a010bd0000f00aa24011bd0000f002a9016bc22064" },
+  // 2. Desfaz hook de liberação de VRAM em $80:AC68 e bytes de pools antigos
+  { offset: 0x002C68, hex: "223cd182" },
+  { offset: 0x002D0D, hex: "06" },
+  { offset: 0x004E4C, hex: "05" },
+  // 3. Desfaz hook de claim de VRAM em $82:CBE3 e hooks antigos em $82:D122 / $82:D13C
+  { offset: 0x014BE3, hex: "22609baf" },
+  { offset: 0x015122, hex: "5c08d0b5" },
+  { offset: 0x01513C, hex: "a523a20200df1cd102f005ca10f78006a9ff9f480700a9ff9f500700" },
+  // 4. Desfaz quaisquer hooks em $AC:F000, $AC:F00C, $AC:F019 e $AC:F037
+  { offset: 0x167000, hex: "5c41f0ac" },
+  { offset: 0x16700C, hex: "2268cc80" },
+  { offset: 0x167019, hex: "5cf4cc80" },
+  { offset: 0x167037, hex: "a9028f0f007e" },
+  // 5. Restaura o limitador original do Uncut em Bank B5 ($B5:D8A8, 131 bytes)
+  { offset: 0x1AD8A8, hex: "08c230a900008fb0f27faf00107e29ff00f009afb0f27f1a8fb0f27fafa0107e29ff00f009afb0f27f1a8fb0f27faf59077e29ff00d017af40117e29ff00f009afb0f27f1a8fb0f27fa903008003a902008fb2f27faf00f27f29ff00c95a00d010af88f27ff00acfb2f27fb0048fb2f27fafb0f27fcfb2f27fb00428a9006b28a9016b" },
+  // Restaura o alocador de VRAM nativo antes de qualquer exportação.
+  { offset: 0x015088, hex: "daa20200ebad5907f001cabd48073006ca10f838fa6b" },
+  // Restabelece as cinco tabelas originais usadas pelos caminhos de DMA/OAM.
+  { offset: 0x014C86, hex: "1fd102" }, { offset: 0x014C92, hex: "c2d102" },
+  { offset: 0x014C99, hex: "c5d102" }, { offset: 0x014CA0, hex: "19d102" },
+  { offset: 0x014CA5, hex: "1cd102" },
+  { offset: 0x0150A5, hex: "1fd102" }, { offset: 0x0150B1, hex: "c2d102" },
+  { offset: 0x0150B8, hex: "c5d102" }, { offset: 0x0150BF, hex: "19d102" },
+  { offset: 0x0150C4, hex: "1cd102" },
+  { offset: 0x0150F4, hex: "1fd102" }, { offset: 0x015100, hex: "c2d102" },
+  { offset: 0x015107, hex: "c5d102" }, { offset: 0x01510E, hex: "19d102" },
+  { offset: 0x015113, hex: "1cd102" },
+  { offset: 0x01513E, hex: "a20200" }, { offset: 0x015142, hex: "1cd102" },
+  { offset: 0x015163, hex: "a20200" }, { offset: 0x015167, hex: "1cd102" },
+  { offset: 0x0151B8, hex: "c5d102" }, { offset: 0x0151BD, hex: "c2d102" },
+  // Compatibilidade: restaura as sequências OBJ alteradas em ROMs de teste antigas, nos limites corretos das instruções.
+  { offset: 0x014C8C, hex: "a9018d1d00" },
+  { offset: 0x0150AC, hex: "018d1d00bf" },
+  { offset: 0x0150FB, hex: "018d1d00bf" },
+  // O código/tabelas experimentais ocupavam esta área livre no fim do banco AC.
+  { offset: 0x167F42, hex: "00".repeat(82) },
+  { offset: 0x167F90, hex: "00".repeat(28) },
+  // 6. Repara código OAM do Uncut em $AC:F100..$AC:F263 caso corrompido por versões antigas e limpa áreas livres de Bank $AC
+  { offset: 0x167100, hex: "c2202051fda900005ba500c918009026c9e800b021a5d829ff003a38efd2f77f1003a900008504b9050029ff00f007c504b0034c15e0a900005ba610d40ad40ed412d416a506290030850eb9050029ff003a29ff000a85160a186516851698186516851620b1fd48e220a5dcf022c901f014c902f004a900801caf48017e0a0a0a0a0a0a8010af48017e0a0a0a0a8006af48017e0a0a8513c2201880069818690600a8b90b0065028502c9e0009009c9e0ffb0034c37f2188ac30190034c50f2b9090065008500c90001901e18691000c9100190034c46f2c90800b00bb90e00291000d0034c46f2a5009500a5029501b90d0089000ed03829ffc105069502e220a501c9016613b90e002910c9106613e8e8e8e88a290fd00ca513daa6da9f00007efae6dac220c416f0034c9df1802029ffcf050e80c6b909001865008500c416f0034c9df1c416f0034c9df14c50f28a38e5104a4a8516e220a5d838e51685d88a4a4a" },
+  { offset: 0x166D00, hex: "00".repeat(768) },
+  { offset: 0x167050, hex: "00".repeat(176) },
+  { offset: 0x167DC7, hex: "00".repeat(489) }
+];
+
+// Motor Nativo de 4 Inimigos (verificado ciclo a ciclo em emulador 65816):
+// 1) Alocador seguro em $AC:F050: testa $1000, $10A0, $1140 e, se sem chefe ($0759==0, $07D7==0) e $11E0==0, aloca $11E0 com $7E11F0 = 2.
+// 2) Despachante de IA do Slot 4 em $AC:F00C -> $AC:F0A0 ($7E11F0 == 2 -> IA comum $80:CC64; senão -> IA de chefe $80:CC68, mantendo $AC:F000 e $AC:F037 originais!).
+// 3) Limitador em $B5:D8A8 -> $AC:FDC7: conta 4 slots, teto = 4 (ou 2 com chefe $0759/$07D7), sem trava de 2 inimigos na Fase 1.
+// 4) Compartilhamento seguro de VRAM em $82:CBE3 -> $AC:FE4A: usa slot de VRAM livre primeiro; quando os 3 slots ($0748..$074A) estão ocupados e há vaga para o 4º inimigo, compartilha slot de mesmo ID ou mesma família gráfica ($77).
+// 5) Liberação de VRAM com referência em $80:AC68 -> $AC:FED0: só libera $0748,X / $0750,X quando nenhum outro inimigo vivo (nem spawn em trânsito) compartilha o mesmo +$23, decrementando sempre $168C.
+const NATIVE_ENGINE_PATCHES = [
+  // 1. Hook do Alocador em Bank 80 ($80:AC27 -> JML $AC:F050 + 23 NOPs = 27 bytes exatos da rotina original)
+  { offset: 0x002C27, bytes: [
+    0x5C, 0x50, 0xF0, 0xAC,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA
+  ]},
+
+  // 2. Alocador seguro em $AC:F050 (69 bytes)
+  { offset: 0x167050, bytes: [
+    0xA2, 0x00, 0x10, 0xAF, 0x00, 0x10, 0x7E, 0xF0, 0x30,
+    0xA2, 0xA0, 0x10, 0xAF, 0xA0, 0x10, 0x7E, 0xF0, 0x27,
+    0xA2, 0x40, 0x11, 0xAF, 0x40, 0x11, 0x7E, 0xF0, 0x1E,
+    0xAF, 0x59, 0x07, 0x7E, 0xD0, 0x21,
+    0xAF, 0xD7, 0x07, 0x7E, 0xD0, 0x1B,
+    0xAF, 0xE0, 0x11, 0x7E, 0xD0, 0x15,
+    0xA2, 0xE0, 0x11,
+    0xA9, 0x02, 0x8F, 0xF0, 0x11, 0x7E,
+    0xA9, 0x00, 0x6B,
+    0xA9, 0x02, 0x9F, 0x10, 0x00, 0x7E,
+    0xA9, 0x00, 0x6B,
+    0xA9, 0x01, 0x6B
+  ]},
+
+  // 3. Hook da IA do Slot 4 em $AC:F00C (JSR $F0A0; NOP)
+  { offset: 0x16700C, bytes: [0x20, 0xA0, 0xF0, 0xEA] },
+
+  // 4. Despachante de IA do Slot 4 em $AC:F0A0 (18 bytes)
+  { offset: 0x1670A0, bytes: [
+    0xAF, 0xF0, 0x11, 0x7E,
+    0xC9, 0x02,
+    0xD0, 0x05,
+    0x22, 0x64, 0xCC, 0x80,
+    0x60,
+    0x22, 0x68, 0xCC, 0x80,
+    0x60
+  ]},
+
+  // 5. Hook do Limitador em Bank B5 ($B5:D8A8 -> JML $AC:FDC7 + 127 NOPs = 131 bytes)
+  { offset: 0x1AD8A8, bytes: [
+    0x5C, 0xC7, 0xFD, 0xAC,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA,
+    0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA, 0xEA
+  ]},
+
+  // 6. Rotina do Limitador de 4 Inimigos em $AC:FDC7 (130 bytes: $AC:FDC7..$AC:FE48)
+  { offset: 0x167DC7, bytes: [
+    0x08, 0xC2, 0x30, 0xA9, 0x00, 0x00, 0x8F, 0xB0, 0xF2, 0x7F, 0xAF, 0x00,
+    0x10, 0x7E, 0x29, 0xFF, 0x00, 0xF0, 0x09, 0xAF, 0xB0, 0xF2, 0x7F, 0x1A,
+    0x8F, 0xB0, 0xF2, 0x7F, 0xAF, 0xA0, 0x10, 0x7E, 0x29, 0xFF, 0x00, 0xF0,
+    0x09, 0xAF, 0xB0, 0xF2, 0x7F, 0x1A, 0x8F, 0xB0, 0xF2, 0x7F, 0xAF, 0x59,
+    0x07, 0x7E, 0x29, 0xFF, 0x00, 0xD0, 0x32, 0xAF, 0xD7, 0x07, 0x7E, 0x29,
+    0xFF, 0x00, 0xD0, 0x29, 0xAF, 0x40, 0x11, 0x7E, 0x29, 0xFF, 0x00, 0xF0,
+    0x09, 0xAF, 0xB0, 0xF2, 0x7F, 0x1A, 0x8F, 0xB0, 0xF2, 0x7F, 0xAF, 0xE0,
+    0x11, 0x7E, 0x29, 0xFF, 0x00, 0xF0, 0x09, 0xAF, 0xB0, 0xF2, 0x7F, 0x1A,
+    0x8F, 0xB0, 0xF2, 0x7F, 0xA9, 0x04, 0x00, 0x80, 0x03, 0xA9, 0x02, 0x00,
+    0x8F, 0xB2, 0xF2, 0x7F, 0xAF, 0xB0, 0xF2, 0x7F, 0xCF, 0xB2, 0xF2, 0x7F,
+    0xB0, 0x04, 0x28, 0xA9, 0x00, 0x6B, 0x28, 0xA9, 0x01, 0x6B
+  ]},
+
+  // 7. Hook de Claim de VRAM de Inimigos em $82:CBE3 -> JML $AC:FE4A (4 bytes)
+  { offset: 0x014BE3, bytes: [0x5C, 0x4A, 0xFE, 0xAC] },
+
+  // 8. Alocador/Compartilhador de VRAM para o 4º Inimigo em $AC:FE4A (134 bytes: $AC:FE4A..$AC:FECF)
+  { offset: 0x167E4A, bytes: [
+    0x22, 0x60, 0x9B, 0xAF, 0xB0, 0x04, 0x5C, 0xE9, 0xCB, 0x82, 0x22, 0xC7,
+    0xFD, 0xAC, 0xC9, 0x00, 0xF0, 0x04, 0x5C, 0x16, 0xCC, 0x82, 0xDA, 0xA2,
+    0x02, 0x00, 0xAF, 0x59, 0x07, 0x7E, 0xF0, 0x01, 0xCA, 0xBF, 0x48, 0x07,
+    0x7E, 0xC5, 0x79, 0xF0, 0x2C, 0xCA, 0x10, 0xF5, 0xA2, 0x02, 0x00, 0xAF,
+    0x59, 0x07, 0x7E, 0xF0, 0x01, 0xCA, 0xBF, 0x48, 0x07, 0x7E, 0xC9, 0x42,
+    0xB0, 0x0F, 0xDA, 0xEB, 0xA9, 0x00, 0xEB, 0xAA, 0xBF, 0xC9, 0xD1, 0x02,
+    0xFA, 0xC5, 0x77, 0xF0, 0x08, 0xCA, 0x10, 0xE6, 0xFA, 0x5C, 0x16, 0xCC,
+    0x82, 0xBF, 0x1C, 0xD1, 0x02, 0x85, 0x20, 0xBF, 0x19, 0xD1, 0x02, 0x85,
+    0x21, 0xBF, 0x1F, 0xD1, 0x02, 0x85, 0x22, 0xBF, 0xC2, 0xD1, 0x02, 0x85,
+    0x23, 0xBF, 0xC5, 0xD1, 0x02, 0x85, 0x24, 0xFA, 0xA5, 0x77, 0xC9, 0x10,
+    0xD0, 0x04, 0xA9, 0x0A, 0x80, 0x02, 0xA9, 0x0E, 0x85, 0x03, 0x5C, 0x16,
+    0xCC, 0x82
+  ]},
+
+  // 9. Hook de Liberação Segura de VRAM na morte do inimigo em $80:AC68 -> JSL $AC:FED0 (4 bytes)
+  { offset: 0x002C68, bytes: [0x22, 0xD0, 0xFE, 0xAC] },
+
+  // 10. Liberação de VRAM com checagem de compartilhamento ativo em $AC:FED0 (112 bytes: $AC:FED0..$AC:FF3F)
+  { offset: 0x167ED0, bytes: [
+    0xAF, 0x00, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0x23, 0x10, 0x7E, 0xC5, 0x23,
+    0xF0, 0x56, 0xAF, 0xA0, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0xC3, 0x10, 0x7E,
+    0xC5, 0x23, 0xF0, 0x48, 0xAF, 0x40, 0x11, 0x7E, 0xF0, 0x08, 0xAF, 0x63,
+    0x11, 0x7E, 0xC5, 0x23, 0xF0, 0x3A, 0xAF, 0xE0, 0x11, 0x7E, 0xF0, 0x10,
+    0xAF, 0xF0, 0x11, 0x7E, 0xC9, 0x02, 0xD0, 0x08, 0xAF, 0x03, 0x12, 0x7E,
+    0xC5, 0x23, 0xF0, 0x24, 0xAF, 0x81, 0x16, 0x7E, 0xC9, 0x02, 0xD0, 0x18,
+    0xAF, 0x82, 0x16, 0x7E, 0xC9, 0x02, 0xD0, 0x10, 0xAF, 0x83, 0x16, 0x7E,
+    0xC9, 0x08, 0x90, 0x08, 0xAF, 0xA0, 0x16, 0x7E, 0xC5, 0x23, 0xF0, 0x04,
+    0x5C, 0x3C, 0xD1, 0x82, 0xAF, 0x8C, 0x16, 0x7E, 0xF0, 0x05, 0x3A, 0x8F,
+    0x8C, 0x16, 0x7E, 0x6B
+  ]},
+
+];
+
+// Extensão opcional (1P): Banco Gráfico Dedicado do P2 para o 4º Inimigo (sem tocar nas tabelas do Bank $82!)
+// - Usa $AC:ED00 (341 B) e $AC:EE60 (193 B), desviados a partir dos hooks já estáveis em $AC:FE4A e $AC:FED0.
+// - Em 1P ($00CD bit 1 == 0, $7E0D80 == 0) e sem chefe ($0759 == 0, $07D7 == 0), aloca:
+//     WRAM metasprites = $7E:D800..$7E:F7FF ($D8), VRAM = $0A00..$0EFF (Página 0, 80 tiles),
+//     OAM tile base = $A0 ($001C=$A0, $001D=$00), Paleta OBJ 1 ($001A=$02, CGRAM $001B=$20 -> $0520).
+// - Ao liberar o 4º banco (quando nenhum outro inimigo usa $D8), limpa $074B/$0753 e enfileira
+//   a restauração VBlank-safe dos tiles de comida/itens ($10:F020 -> $0A00, $0E00 B) via $80:8999 (X=$00C4, A=$40).
+// - Em 2P ou chefes, cai automaticamente para o fallback seguro de compartilhamento.
+const P2_VRAM_BANK_PATCHES = [
+  // Desvio de $AC:FE4A -> JMP $ED00
+  { offset: 0x167E4A, bytes: [0x4C, 0x00, 0xED] },
+  // Desvio de $AC:FED0 -> JMP $EE60
+  { offset: 0x167ED0, bytes: [0x4C, 0x60, 0xEE] },
+  // Rotina 1: $AC:ED00 (0x166D00, 341 bytes) — Claim VRAM com 4º banco dedicado em 1P + fallback seguro
+  { offset: 0x166D00, bytes: [
+    0x22, 0x60, 0x9B, 0xAF, 0xB0, 0x04, 0x5C, 0xE9, 0xCB, 0x82, 0x22, 0xC7,
+    0xFD, 0xAC, 0xC9, 0x00, 0xF0, 0x04, 0x5C, 0x16, 0xCC, 0x82, 0xAF, 0xCD,
+    0x00, 0x7E, 0x29, 0x02, 0xD0, 0x61, 0xAF, 0x80, 0x0D, 0x7E, 0xD0, 0x5B,
+    0xAF, 0x59, 0x07, 0x7E, 0xD0, 0x55, 0xAF, 0xD7, 0x07, 0x7E, 0xD0, 0x4F,
+    0xAF, 0xE7, 0x00, 0x7E, 0x29, 0x40, 0xF0, 0x04, 0x5C, 0x16, 0xCC, 0x82,
+    0xAF, 0x00, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0x23, 0x10, 0x7E, 0xC9, 0xD8,
+    0xF0, 0x35, 0xAF, 0xA0, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0xC3, 0x10, 0x7E,
+    0xC9, 0xD8, 0xF0, 0x27, 0xAF, 0x40, 0x11, 0x7E, 0xF0, 0x08, 0xAF, 0x63,
+    0x11, 0x7E, 0xC9, 0xD8, 0xF0, 0x19, 0xAF, 0xE0, 0x11, 0x7E, 0xF0, 0x10,
+    0xAF, 0xF0, 0x11, 0x7E, 0xC9, 0x02, 0xD0, 0x08, 0xAF, 0x03, 0x12, 0x7E,
+    0xC9, 0xD8, 0xF0, 0x03, 0x4C, 0x2D, 0xEE, 0xDA, 0xA2, 0x02, 0x00, 0xAF,
+    0x59, 0x07, 0x7E, 0xF0, 0x01, 0xCA, 0xBF, 0x48, 0x07, 0x7E, 0xC5, 0x79,
+    0xF0, 0x53, 0xCA, 0x10, 0xF5, 0xA2, 0x02, 0x00, 0xAF, 0x59, 0x07, 0x7E,
+    0xF0, 0x01, 0xCA, 0xBF, 0x48, 0x07, 0x7E, 0xC9, 0x42, 0xB0, 0x0F, 0xDA,
+    0xEB, 0xA9, 0x00, 0xEB, 0xAA, 0xBF, 0xC9, 0xD1, 0x02, 0xFA, 0xC5, 0x77,
+    0xF0, 0x2F, 0xCA, 0x10, 0xE6, 0xAF, 0xCD, 0x00, 0x7E, 0x29, 0x02, 0xD0,
+    0x1F, 0xAF, 0x80, 0x0D, 0x7E, 0xD0, 0x19, 0xAF, 0x4B, 0x07, 0x7E, 0xC9,
+    0x42, 0xB0, 0x11, 0xC5, 0x79, 0xF0, 0x33, 0xEB, 0xA9, 0x00, 0xEB, 0xAA,
+    0xBF, 0xC9, 0xD1, 0x02, 0xC5, 0x77, 0xF0, 0x26, 0xFA, 0x5C, 0x16, 0xCC,
+    0x82, 0xBF, 0x1C, 0xD1, 0x02, 0x85, 0x20, 0xBF, 0x19, 0xD1, 0x02, 0x85,
+    0x21, 0xBF, 0x1F, 0xD1, 0x02, 0x85, 0x22, 0xBF, 0xC2, 0xD1, 0x02, 0x85,
+    0x23, 0xBF, 0xC5, 0xD1, 0x02, 0x85, 0x24, 0xFA, 0x80, 0x15, 0xFA, 0xA9,
+    0xD8, 0x85, 0x20, 0xA9, 0x0A, 0x85, 0x21, 0xA9, 0xA0, 0x85, 0x22, 0xA9,
+    0x02, 0x85, 0x23, 0xA9, 0x20, 0x85, 0x24, 0xA5, 0x77, 0xC9, 0x10, 0xD0,
+    0x04, 0xA9, 0x0A, 0x80, 0x02, 0xA9, 0x0E, 0x85, 0x03, 0x5C, 0x16, 0xCC,
+    0x82, 0xA5, 0x79, 0x8F, 0x4B, 0x07, 0x7E, 0xA9, 0xA0, 0x8F, 0x1C, 0x00,
+    0x00, 0xA9, 0x00, 0x8F, 0x1D, 0x00, 0x00, 0xA9, 0x02, 0x8F, 0x1A, 0x00,
+    0x00, 0xA9, 0x20, 0x8F, 0x1B, 0x00, 0x00, 0xA9, 0x0A, 0xEB, 0xA9, 0xD8,
+    0x18, 0x5C, 0xE9, 0xCB, 0x82
+  ]},
+  // Rotina 2: $AC:EE60 (0x166E60, 193 bytes) — Liberação segura + restauração de tiles de itens ($00C4)
+  { offset: 0x166E60, bytes: [
+    0xAF, 0x00, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0x23, 0x10, 0x7E, 0xC5, 0x23,
+    0xF0, 0x5C, 0xAF, 0xA0, 0x10, 0x7E, 0xF0, 0x08, 0xAF, 0xC3, 0x10, 0x7E,
+    0xC5, 0x23, 0xF0, 0x4E, 0xAF, 0x40, 0x11, 0x7E, 0xF0, 0x08, 0xAF, 0x63,
+    0x11, 0x7E, 0xC5, 0x23, 0xF0, 0x40, 0xAF, 0xE0, 0x11, 0x7E, 0xF0, 0x10,
+    0xAF, 0xF0, 0x11, 0x7E, 0xC9, 0x02, 0xD0, 0x08, 0xAF, 0x03, 0x12, 0x7E,
+    0xC5, 0x23, 0xF0, 0x2A, 0xAF, 0x81, 0x16, 0x7E, 0xC9, 0x02, 0xD0, 0x18,
+    0xAF, 0x82, 0x16, 0x7E, 0xC9, 0x02, 0xD0, 0x10, 0xAF, 0x83, 0x16, 0x7E,
+    0xC9, 0x08, 0x90, 0x08, 0xAF, 0xA0, 0x16, 0x7E, 0xC5, 0x23, 0xF0, 0x0A,
+    0xA5, 0x23, 0xC9, 0xD8, 0xF0, 0x10, 0x5C, 0x3C, 0xD1, 0x82, 0xAF, 0x8C,
+    0x16, 0x7E, 0xF0, 0x05, 0x3A, 0x8F, 0x8C, 0x16, 0x7E, 0x6B, 0xA9, 0xFF,
+    0x8F, 0x4B, 0x07, 0x7E, 0x8F, 0x53, 0x07, 0x7E, 0xAF, 0x8C, 0x16, 0x7E,
+    0xF0, 0x05, 0x3A, 0x8F, 0x8C, 0x16, 0x7E, 0xAF, 0xCD, 0x00, 0x7E, 0x29,
+    0x02, 0xD0, 0x2D, 0xAF, 0x80, 0x0D, 0x7E, 0xD0, 0x27, 0xAF, 0xE7, 0x00,
+    0x7E, 0x29, 0x41, 0xD0, 0x1F, 0xAF, 0x53, 0x01, 0x7E, 0xD0, 0x19, 0x08,
+    0x8B, 0xDA, 0x5A, 0xE2, 0x20, 0xC2, 0x10, 0xA9, 0x00, 0x48, 0xAB, 0xA2,
+    0xC4, 0x00, 0xA9, 0x40, 0x22, 0x99, 0x89, 0x80, 0x7A, 0xFA, 0xAB, 0x28,
+    0x6B
+  ]}
+];
+
+function applyNativeEngine(buf, mode = 4, useP2VramBank = activeP2VramBank) {
+  if (!buf) return;
+  // 1) Restaura estado original limpo (desfazendo qualquer versão anterior)
+  NATIVE_ENGINE_RESTORE.forEach(r => {
+    for (let i = 0; i < r.hex.length / 2; i++) {
+      buf[r.offset + i] = parseInt(r.hex.substr(i * 2, 2), 16);
+    }
+  });
+  if (mode !== 4) {
+    // Modo original: mantém o limite e o processamento de três slots da ROM.
+    buf[0x167F40] = 0x03;
+    buf[0x167F41] = 0x00;
+    return;
+  }
+  // 2) Aplica o motor nativo seguro de 4 inimigos
+  NATIVE_ENGINE_PATCHES.forEach(p => {
+    for (let i = 0; i < p.bytes.length; i++) {
+      buf[p.offset + i] = p.bytes[i];
+    }
+  });
+  // 3) Se ativado, aplica o 4º banco gráfico dedicado (área do P2 em 1P) sem tocar no Bank $82
+  if (useP2VramBank) {
+    P2_VRAM_BANK_PATCHES.forEach(p => {
+      for (let i = 0; i < p.bytes.length; i++) {
+        buf[p.offset + i] = p.bytes[i];
+      }
+    });
+  }
+  buf[0x167F40] = 0x04;
+  buf[0x167F41] = useP2VramBank ? 0x50 : 0x00;
+}
+
+function recalculateSnesChecksum(buf) {
+  if (!buf || buf.length < 0x8000) return;
+  let sum = 0;
+  for (let i = 0; i < buf.length; i++) {
+    if (i >= 0x7FDC && i <= 0x7FDF) continue;
+    sum = (sum + buf[i]) & 0xFFFF;
+  }
+  const inv = sum ^ 0xFFFF;
+  buf[0x7FDC] = inv & 0xFF;
+  buf[0x7FDD] = (inv >> 8) & 0xFF;
+  buf[0x7FDE] = sum & 0xFF;
+  buf[0x7FDF] = (sum >> 8) & 0xFF;
+  return { sum, inv };
+}
+
+function isEnemyId(id) {
+  if (romBytes && romBytes[0x0151C8 + id] === 0x02) return true;
+  return (id < 0x40);
+}
+
+document.getElementById("romFileInput").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  romFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    let raw = new Uint8Array(ev.target.result);
+    // Remove 512-byte SMC copier header if present
+    if ((raw.length % 1024) === 512) {
+      raw = raw.slice(512);
+    }
+    romBytes = new Uint8Array(raw);
+    originalRomBytes = new Uint8Array(raw);
+    expertRosterAddedOffsets = null;
+    selectedStage = null;
+    selectedWave = null;
+    selectedEntryIndex = -1;
+    parsedStages = [];
+
+    const marker = romBytes[0x167F40];
+    const p2Marker = romBytes[0x167F41];
+    const uiMode = document.getElementById("radioMode3").checked ? 3 : 4;
+    const mode = marker === 0x04 ? 4 : (marker === 0x03 ? 3 : uiMode);
+    const uiP2Bank = document.getElementById("chkP2VramBank").checked;
+    activeEnemyMode = mode;
+    activeP2VramBank = (mode === 4 && p2Marker === 0x50) ? true : uiP2Bank;
+    applyNativeEngine(romBytes, mode, activeP2VramBank);
+    recalculateSnesChecksum(romBytes);
+
+    updateModeUIFromRom();
+    parseAllStagesAndWaves();
+    document.getElementById("btnSaveRom").disabled = false;
+    document.getElementById("btnSaveIps").disabled = false;
+    const modeDesc = mode === 4
+      ? (activeP2VramBank ? "4 inimigos simultâneos + Banco P2 (1P)" : "4 inimigos simultâneos (compartilhamento)")
+      : "original de 3 inimigos";
+    document.getElementById("romStatusBox").innerHTML =
+      `✅ ROM Carregada: <strong>${romFileName}</strong> (${(romBytes.length/1024).toFixed(0)} KB) — Modo ${modeDesc} ativo`;
+    if (document.getElementById("chkAutoDup").checked) setAutoDuplication(true);
+    if (document.getElementById("chkAllEnemiesExpert").checked) setAllEnemiesExpert(true);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function updateP2BankUI() {
+  const chk = document.getElementById("chkP2VramBank");
+  const card = document.getElementById("cardP2VramBank");
+  const badge = document.getElementById("badgeP2Vram");
+  if (!chk || !card || !badge) return;
+  const enabled = activeEnemyMode === 4 && activeP2VramBank;
+  chk.checked = activeP2VramBank;
+  chk.disabled = (activeEnemyMode !== 4);
+  card.classList.toggle("active-4", enabled);
+  card.style.opacity = activeEnemyMode === 4 ? "1" : "0.55";
+  badge.textContent = activeEnemyMode !== 4 ? "Só Modo 4" : (activeP2VramBank ? "1P Ativo" : "Desligado");
+  badge.className = "badge " + (enabled ? "badge-green" : "badge-gold");
+}
+
+function updateModeUIFromRom() {
+  if (!romBytes) return;
+  const mode = romBytes[0x167F40] === 0x04 ? 4 : 3;
+  activeEnemyMode = mode;
+  if (mode === 4) {
+    activeP2VramBank = (romBytes[0x167F41] === 0x50);
+  }
+  document.getElementById("radioMode3").checked = (mode === 3);
+  document.getElementById("radioMode4").checked = (mode === 4);
+  document.getElementById("radioMode5").checked = false;
+  document.getElementById("cardMode3").classList.toggle("active-3", mode === 3);
+  document.getElementById("cardMode4").classList.toggle("active-4", mode === 4);
+  document.getElementById("cardMode5").classList.toggle("active-5", mode === 5);
+  updateP2BankUI();
+  const isAutoDup = document.getElementById("chkAutoDup").checked;
+  document.getElementById("badgeAutoDup").textContent = isAutoDup ? "Ativo" : "Manual";
+}
+
+function setEnemyMode(mode) {
+  if (mode === 5) {
+    alert(translateText("Modo 5 inimigos indisponível: não existe bloco de RAM seguro para o quinto slot. Voltando ao modo original de 3 inimigos."));
+    mode = 3;
+  }
+  activeEnemyMode = mode;
+  document.getElementById("radioMode3").checked = (mode === 3);
+  document.getElementById("radioMode4").checked = (mode === 4);
+  document.getElementById("radioMode5").checked = false;
+  document.getElementById("cardMode3").classList.toggle("active-3", mode === 3);
+  document.getElementById("cardMode4").classList.toggle("active-4", mode === 4);
+  document.getElementById("cardMode5").classList.toggle("active-5", mode === 5);
+  updateP2BankUI();
+  if (romBytes) {
+    applyNativeEngine(romBytes, mode, activeP2VramBank);
+    recalculateSnesChecksum(romBytes);
+    drawWaveCanvas();
+    if (document.getElementById("chkAutoDup").checked) setAutoDuplication(true);
+  }
+}
+
+function setP2VramBank(enabled) {
+  activeP2VramBank = !!enabled;
+  updateP2BankUI();
+  if (romBytes && activeEnemyMode === 4) {
+    applyNativeEngine(romBytes, 4, activeP2VramBank);
+    recalculateSnesChecksum(romBytes);
+    drawWaveCanvas();
+    document.getElementById("romStatusBox").textContent = activeP2VramBank
+      ? "Banco Gráfico do P2 (1P) ativado: 4º inimigo usa VRAM $0A00–$0EFF (Página 0), Paleta 1 e WRAM $7E:D800."
+      : "Banco Gráfico do P2 desativado: 4º inimigo usa compartilhamento clássico na Página 1 (idêntico à ROM de referência).";
+    if (document.getElementById("chkAutoDup").checked) setAutoDuplication(true);
+  }
+}
+
+function setAutoDuplication(enabled) {
+  document.getElementById("badgeAutoDup").textContent = enabled ? "Ativo" : "Manual";
+  if (!enabled || !romBytes) return;
+  const result = autoExpandAllWavesAllStages(activeEnemyMode);
+  parseAllStagesAndWaves();
+  document.getElementById("romStatusBox").textContent =
+    `Auto-Preencher aplicado: ${result.adjustedWaves} waves ajustadas, ${result.clonesAdded} inimigos duplicados e ${result.limitedWaves} waves sem espaço seguro para expansão. Modo ${activeEnemyMode} ativo.`;
+}
+
+function applyExpertRosterToAllWaves(enabled) {
+  if (!romBytes) return { changed: 0, expertEntries: 0 };
+  if (enabled && !expertRosterAddedOffsets) expertRosterAddedOffsets = new Set();
+  const expertEntries = new Set();
+  let changed = 0;
+
+  for (const stage of parsedStages) {
+    for (const scene of stage.scenes) {
+      for (const wave of scene.waves) {
+        for (const entry of wave.entries) {
+          const maskOff = entry.fileOff + 8;
+          if (maskOff < 0 || maskOff >= romBytes.length) continue;
+          let diffHp = romBytes[maskOff];
+          entry.diffHp = diffHp;
+
+          if (enabled) {
+            if (isEnemyId(entry.id)) {
+              const difficultyMask = diffHp & 0xF0;
+              // A zero mask already means every difficulty; setting only 0x80 would make it Expert-only.
+              if (difficultyMask !== 0 && (difficultyMask & 0x80) === 0) {
+                if (!expertRosterAddedOffsets.has(entry.fileOff)) {
+                  expertRosterAddedOffsets.add(entry.fileOff);
+                  changed++;
+                }
+                diffHp |= 0x80;
+                romBytes[maskOff] = diffHp;
+                entry.diffHp = diffHp;
+              }
+              if ((diffHp & 0xF0) === 0 || (diffHp & 0x80) !== 0) expertEntries.add(entry.fileOff);
+            }
+          } else if (expertRosterAddedOffsets && expertRosterAddedOffsets.has(entry.fileOff)) {
+            diffHp &= 0x7F;
+            romBytes[maskOff] = diffHp;
+            entry.diffHp = diffHp;
+            entry._expertRosterAdded = false;
+            expertRosterAddedOffsets.delete(entry.fileOff);
+            changed++;
+          }
+        }
+      }
+    }
+  }
+
+  if (!enabled) expertRosterAddedOffsets = null;
+  return { changed, expertEntries: enabled ? expertEntries.size : 0 };
+}
+
+function setAllEnemiesExpert(enabled) {
+  const badge = document.getElementById("badgeAllEnemiesExpert");
+  const card = document.getElementById("cardAllEnemiesExpert");
+  if (badge) badge.textContent = enabled ? "Ativo" : "Desligado";
+  if (card) card.classList.toggle("active-4", enabled);
+  if (!romBytes) return;
+
+  const result = applyExpertRosterToAllWaves(enabled);
+  if (selectedWave) {
+    renderStagesTree();
+    renderWaveEntriesList();
+    populateInspector();
+    drawWaveCanvas();
+  }
+  document.getElementById("romStatusBox").textContent = enabled
+    ? `Expert ativado: ${result.changed} inimigos receberam essa dificuldade; ${result.expertEntries} spawns aparecem no Expert. Desativar remove somente os bits adicionados por esta opcao.`
+    : `Expert desativado: ${result.changed} bits adicionados por esta opcao foram removidos.`;
+}
+
+function autoExpandAllWavesInCurrentStage() {
+  if (!romBytes || !selectedStage) {
+    alert(translateText("Selecione uma fase primeiro na árvore à esquerda!"));
+    return;
+  }
+  const targetEnemies = activeEnemyMode;
+  const result = { adjustedWaves: 0, repeatedTypes: 0, clonesAdded: 0, objectsRemoved: 0, substitutedObjects: 0, limitedWaves: 0 };
+
+  selectedStage.scenes.forEach(scene => {
+    scene.waves.forEach(wave => {
+      const change = autoFillWaveForSimultaneous(wave, targetEnemies);
+      result.adjustedWaves += change.changed ? 1 : 0;
+      result.repeatedTypes += change.repeatedType ? 1 : 0;
+      result.clonesAdded += change.clonesAdded;
+      result.objectsRemoved += change.objectsRemoved;
+      result.substitutedObjects += change.substitutedObjects;
+      result.limitedWaves += change.limited ? 1 : 0;
+    });
+  });
+
+  parseAllStagesAndWaves();
+  if (selectedWave) selectWave(selectedWave);
+  alert(translateText(`⚡ ${result.adjustedWaves} waves ajustadas; ${result.repeatedTypes} com família/tipo compartilhado; ${result.clonesAdded} cópias inseridas; objetos quebráveis preservados (${result.objectsRemoved} removidos); ${result.limitedWaves} waves sem área segura para expansão.`));
+}
+
+function autoExpandAllWavesAllStages(targetEnemies) {
+  const result = { adjustedWaves: 0, repeatedTypes: 0, clonesAdded: 0, objectsRemoved: 0, substitutedObjects: 0, limitedWaves: 0 };
+  if (!romBytes || !parsedStages) return result;
+  parsedStages.forEach(st => {
+    st.scenes.forEach(scene => {
+      scene.waves.forEach(wave => {
+        const change = autoFillWaveForSimultaneous(wave, targetEnemies);
+        result.adjustedWaves += change.changed ? 1 : 0;
+        result.repeatedTypes += change.repeatedType ? 1 : 0;
+        result.clonesAdded += change.clonesAdded;
+        result.objectsRemoved += change.objectsRemoved;
+        result.substitutedObjects += change.substitutedObjects;
+        result.limitedWaves += change.limited ? 1 : 0;
+      });
+    });
+  });
+  return result;
+}
+
+function getSpriteFamily(id) {
+  return romBytes ? romBytes[0x0151C9 + id] : id;
+}
+
+function autoFillWaveForSimultaneous(wave, targetEnemies) {
+  const getEnemyIndexes = () => wave.entries.reduce((indexes, entry, index) => {
+    if (isEnemyId(entry.id)) indexes.push(index);
+    return indexes;
+  }, []);
+  let enemyIndexes = getEnemyIndexes();
+  if (enemyIndexes.length === 0) {
+    return { changed: false, repeatedType: false, clonesAdded: 0, objectsRemoved: 0, substitutedObjects: 0, limited: false };
+  }
+
+  let changed = false;
+  const objectsRemoved = 0;
+  const substitutedObjects = 0;
+  const originalEntries = wave.entries.map(entry => ({ ...entry }));
+
+  const source = wave.entries[enemyIndexes[0]];
+  const allDiffSourceMask = (source.diffHp & 0x0F) | 0xF0;
+  const needed = Math.max(0, targetEnemies - enemyIndexes.length);
+  const clonesToAdd = needed;
+
+  if (clonesToAdd > 0) {
+    const clones = [];
+    for (let i = 0; i < clonesToAdd; i++) {
+      clones.push({
+        fileOff: 0,
+        delay: 1,
+        x: source.x,
+        y: Math.min(0x0058, Math.max(0x0028, source.y + (i % 2 === 0 ? 8 : -8))),
+        id: source.id,
+        spawnMode: source.spawnMode,
+        diffHp: allDiffSourceMask
+      });
+    }
+    wave.entries.splice(enemyIndexes[0] + 1, 0, ...clones);
+    changed = true;
+  }
+
+  // Preserva objetos quebráveis (barris, cabines, pneus etc.) e mantém objetos iniciais
+  // antes dos inimigos de abertura, pois objetos ($76=0x0A) exigem slot $FF livre em $0748..$074A.
+  const leadingObjects = [];
+  let seenDelayedEnemy = false;
+  for (const entry of wave.entries) {
+    if (isEnemyId(entry.id)) {
+      if (entry.delay > 1) seenDelayedEnemy = true;
+    } else if (!seenDelayedEnemy) {
+      leadingObjects.push(entry);
+    }
+  }
+  const leadingObjectSet = new Set(leadingObjects);
+
+  enemyIndexes = getEnemyIndexes();
+  const limited = enemyIndexes.length < targetEnemies;
+  // Prioriza inimigos já visíveis na dificuldade Normal (0x20) ou global (0x00) para os slots de abertura
+  const normIndexes = enemyIndexes.filter(idx => (wave.entries[idx].diffHp & 0xF0) === 0 || (wave.entries[idx].diffHp & 0x20) !== 0);
+  const otherEnemyIndexes = enemyIndexes.filter(idx => !normIndexes.includes(idx));
+  const orderedEnemyIndexes = normIndexes.concat(otherEnemyIndexes);
+  const openingEnemies = orderedEnemyIndexes.slice(0, targetEnemies).map(index => wave.entries[index]);
+  const openingSet = new Set(openingEnemies);
+
+  const reordered = leadingObjects
+    .concat(openingEnemies)
+    .concat(wave.entries.filter(entry => !leadingObjectSet.has(entry) && !openingSet.has(entry)));
+  if (reordered.some((entry, index) => entry !== wave.entries[index])) {
+    wave.entries = reordered;
+    changed = true;
+  }
+
+  // Cada família distinta de objeto inicial ocupa 1 dos 3 slots da Página 1 ($0748..$074A).
+  // Com Banco P2 (1P) ativo no Modo 4, há +1 banco dedicado ($0A00) para inimigos (total 4 slots).
+  const leadingObjFamilies = new Set(leadingObjects.map(obj => getSpriteFamily(obj.id)));
+  const totalVramSlots = (targetEnemies === 4 && activeP2VramBank) ? 4 : 3;
+  const freeVramSlotsForEnemies = Math.max(1, totalVramSlots - leadingObjFamilies.size);
+  const allowedFamilies = new Set(
+    openingEnemies.slice(0, freeVramSlotsForEnemies).map(entry => getSpriteFamily(entry.id))
+  );
+
+  const sourceEnemy = openingEnemies[0];
+  let repeatedType = false;
+  for (let i = freeVramSlotsForEnemies; i < openingEnemies.length; i++) {
+    const entry = openingEnemies[i];
+    if (!allowedFamilies.has(getSpriteFamily(entry.id))) {
+      const wantedDiffHp = (sourceEnemy.diffHp & 0x0F) | 0xF0;
+      entry.id = sourceEnemy.id;
+      entry.spawnMode = sourceEnemy.spawnMode;
+      entry.diffHp = wantedDiffHp;
+      changed = true;
+    }
+    repeatedType = true;
+  }
+
+  // Garante que os inimigos iniciais apareçam em todas as dificuldades (Easy/Normal/Hard/Expert = 0xF0) e sem delay longo
+  for (const entry of openingEnemies) {
+    const allDiff = (entry.diffHp & 0x0F) | 0xF0;
+    if (entry.diffHp !== allDiff) {
+      entry.diffHp = allDiff;
+      changed = true;
+    }
+    if (entry.delay !== 1) {
+      entry.delay = 1;
+      changed = true;
+    }
+  }
+
+  if (changed && !writeWaveToRom(wave, { silent: true })) {
+    wave.entries = originalEntries;
+    return { changed: false, repeatedType: false, clonesAdded: 0, objectsRemoved, substitutedObjects, limited: true };
+  }
+  return { changed, repeatedType, clonesAdded: clonesToAdd, objectsRemoved, substitutedObjects, limited };
+}
+
+function parseSceneWaves(scPtr, sceneLabel, sceneMeta = {}) {
+  const waves = [];
+  let curOff = bank87PointerToOffset(scPtr);
+  sceneMeta.scPtr = scPtr;
+  sceneMeta.sceneStartOff = curOff;
+  sceneMeta.sceneEndOff = null;
+  sceneMeta.terminated = false;
+  sceneMeta.waves = waves;
+  const mode = read16(romBytes, curOff);
+  if (mode === 0x7FFF) {
+    sceneMeta.sceneEndOff = curOff + 2;
+    sceneMeta.terminated = true;
+    return waves;
+  }
+  curOff += 2;
+  let step = 1;
+  while (step <= 35 && curOff < 0x040000) {
+    const w0 = read16(romBytes, curOff);
+    if (w0 === 0x7FFF) {
+      sceneMeta.sceneEndOff = curOff + 2;
+      sceneMeta.terminated = true;
+      break;
+    }
+    if ((w0 & 0x8000) !== 0) {
+      curOff += 2;
+    } else {
+      const trigXOff = curOff;
+      const trigX = w0;
+      let lgOff = curOff + 2;
+      let subIdx = 1;
+      while (subIdx <= 20 && lgOff < 0x040000) {
+        const lockX = read16(romBytes, lgOff);
+        const flag0 = romBytes[lgOff + 2];
+        const flag1 = romBytes[lgOff + 3];
+        const entryCount = romBytes[lgOff + 4];
+        const killCount = romBytes[lgOff + 5];
+        const endPtr = read16(romBytes, lgOff + 6);
+        const endOff = bank87PointerToOffset(endPtr);
+        if (lgOff + 8 > 0x040000 || endOff < lgOff + 8 || endOff + 2 > 0x040000) {
+          sceneMeta.terminated = false;
+          return waves;
+        }
+
+        const entries = [];
+        let eOff = lgOff + 8;
+        while (eOff + 9 <= endOff && read16(romBytes, eOff) !== 0x8000) {
+          entries.push({
+            fileOff: eOff,
+            delay: read16(romBytes, eOff),
+            x: read16(romBytes, eOff + 2),
+            y: read16(romBytes, eOff + 4),
+            id: romBytes[eOff + 6],
+            spawnMode: romBytes[eOff + 7],
+            diffHp: romBytes[eOff + 8]
+          });
+          eOff += 9;
+        }
+        const has8000Terminator = (read16(romBytes, eOff) === 0x8000);
+        // endOff aponta para o terminador/comando seguinte; seus bytes não fazem parte da área de entradas.
+        const capacityBytes = endOff - (lgOff + 8);
+        const maxEntriesInPlace = Math.floor(capacityBytes / 9);
+
+        waves.push({
+          idStr: `${step}.${subIdx}`,
+          sceneLabel,
+          trigXOff: (subIdx === 1) ? trigXOff : null,
+          trigX,
+          hdrOff: lgOff,
+          hdrPtr: 0x8000 + (lgOff - 0x038000),
+          lockX,
+          flag0,
+          flag1,
+          entryCount,
+          killCount,
+          endPtr,
+          endOff,
+          has8000Terminator,
+          maxEntriesInPlace,
+          originalEntryCount: entries.length,
+          sceneMeta,
+          entries
+        });
+
+        const endCmd = read16(romBytes, endOff);
+        if ((endCmd & 0x7FFF) === 0x0002 && (endCmd & 0x8000) !== 0) {
+          lgOff = endOff + 2;
+          subIdx++;
+        } else {
+          curOff = endOff;
+          break;
+        }
+      }
+      step++;
+    }
+  }
+  return waves;
+}
+
+function parseAllStagesAndWaves() {
+  if (!romBytes) return;
+  parsedStages = [];
+  let totalWaves = 0;
+
+  STAGE_DEFINITIONS.forEach(stDef => {
+    const tblPtr = read16(romBytes, 0x007B5D + stDef.index * 2);
+    const tblOff = 0x038000 + (tblPtr & 0x7FFF);
+    const scenes = [];
+
+    for (let sc = 0; sc < stDef.sceneCount; sc++) {
+      const scPtr = read16(romBytes, tblOff + sc * 2);
+      const label = `Cena ${sc + 1} ($87:${scPtr.toString(16).toUpperCase()})`;
+      const sceneMeta = {
+        pointerOff: tblOff + sc * 2,
+        pointerTableStart: tblOff,
+        pointerTableEnd: tblOff + stDef.sceneCount * 2,
+        isGuyOverride: false
+      };
+      const waves = parseSceneWaves(scPtr, `${stDef.name} — Cena ${sc + 1}`, sceneMeta);
+      totalWaves += waves.length;
+      const scene = { scIndex: sc, scPtr, label, waves, sceneMeta };
+      sceneMeta.sceneRef = scene;
+      scenes.push(scene);
+
+      // Check if Final Fight Guy Mode has an override for this Stage/Scene
+      const guyOv = GUY_OVERRIDES.find(g => g.stageIdx === stDef.index && g.sceneIdx === sc);
+      if (guyOv) {
+        const guyMeta = { pointerOff: null, isGuyOverride: true };
+        const gWaves = parseSceneWaves(guyOv.ptr, `${stDef.name} — ${guyOv.name}`, guyMeta);
+        totalWaves += gWaves.length;
+        const guyScene = { scIndex: sc, scPtr: guyOv.ptr, label: guyOv.name, waves: gWaves, isGuyOverride: true, sceneMeta: guyMeta };
+        guyMeta.sceneRef = guyScene;
+        scenes.push(guyScene);
+      }
+    }
+    parsedStages.push({ ...stDef, tblPtr, scenes });
+  });
+
+  document.getElementById("totalWavesBadge").textContent = `${totalWaves} waves`;
+  updateFreeSpaceBadge();
+  renderStagesTree();
+
+  // Preserve selection only when the same wave pointer still exists after reparse.
+  if (selectedWave) {
+    for (const st of parsedStages) {
+      for (const sc of st.scenes) {
+        const found = sc.waves.find(w => w.hdrPtr === selectedWave.hdrPtr);
+        if (found) { selectWave(found); return; }
+      }
+    }
+  }
+  selectedWave = null;
+  selectedStage = null;
+  selectedEntryIndex = -1;
+  const firstWave = parsedStages.flatMap(stage => stage.scenes).flatMap(scene => scene.waves)[0];
+  if (firstWave) selectWave(firstWave);
+}
+
+function findSceneRelocationRange(sceneMeta, neededSceneBytes) {
+  const isUnreferencedRange = (start, end) => {
+    for (const stage of parsedStages) {
+      for (const scene of stage.scenes) {
+        const other = scene.sceneMeta;
+        if (!other) continue;
+        if (other.pointerTableStart !== undefined && start < other.pointerTableEnd && end > other.pointerTableStart) return false;
+        if (other.sceneStartOff === sceneMeta.sceneStartOff) continue;
+        if (Number.isInteger(other.sceneEndOff) && start < other.sceneEndOff && end > other.sceneStartOff) return false;
+      }
+    }
+    return true;
+  };
+
+  for (const [start, end] of BANK87_SAFE_RANGES) {
+    const dataStart = start + BANK87_RELOCATION_MAGIC.length;
+    const isThisScene = sceneMeta.sceneStartOff === dataStart &&
+      romBytes[start] === BANK87_RELOCATION_MAGIC[0] &&
+      romBytes[start + 1] === BANK87_RELOCATION_MAGIC[1];
+    if (isThisScene) {
+      const newEnd = dataStart + neededSceneBytes;
+      if (newEnd > end || !isUnreferencedRange(start, newEnd)) return null;
+      for (let off = sceneMeta.sceneEndOff; off < newEnd; off++) {
+        if (romBytes[off] !== 0x00 && romBytes[off] !== 0xFF) return null;
+      }
+      return { start, end, dataStart, existing: true };
+    }
+  }
+
+  for (const [start, end] of BANK87_SAFE_RANGES) {
+    const dataStart = start + BANK87_RELOCATION_MAGIC.length;
+    const newEnd = dataStart + neededSceneBytes;
+    if (newEnd > end || !isUnreferencedRange(start, newEnd)) continue;
+    let blank = true;
+    for (let off = start; off < newEnd; off++) {
+      if (romBytes[off] !== 0x00 && romBytes[off] !== 0xFF) { blank = false; break; }
+    }
+    if (blank) return { start, end, dataStart, existing: false };
+  }
+  return null;
+}
+
+function getTotalFreeSpaceBank87() {
+  if (!romBytes) return 0;
+  let free = 0;
+  for (const [start, end] of BANK87_SAFE_RANGES) {
+    let freeStart = start;
+    const dataStart = start + BANK87_RELOCATION_MAGIC.length;
+    if (romBytes[start] === BANK87_RELOCATION_MAGIC[0] && romBytes[start + 1] === BANK87_RELOCATION_MAGIC[1]) {
+      const allocatedScene = parsedStages.flatMap(stage => stage.scenes)
+        .map(scene => scene.sceneMeta)
+        .find(meta => meta && meta.sceneStartOff === dataStart);
+      if (!allocatedScene || !Number.isInteger(allocatedScene.sceneEndOff)) continue;
+      freeStart = allocatedScene.sceneEndOff;
+    }
+    for (let addr = freeStart; addr < end; addr++) {
+      if (romBytes[addr] === 0x00 || romBytes[addr] === 0xFF) free++;
+    }
+  }
+  return free;
+}
+
+function updateFreeSpaceBadge() {
+  const free = getTotalFreeSpaceBank87();
+  document.getElementById("freeSpaceBadge").textContent = `Bank $87 Livre: ${free} bytes`;
+}
+
+function renderStagesTree() {
+  const container = document.getElementById("stagesTree");
+  container.innerHTML = "";
+  parsedStages.forEach(st => {
+    const group = document.createElement("div");
+    group.className = "stage-group";
+    const title = document.createElement("div");
+    title.className = "stage-title";
+    title.textContent = st.name;
+    group.appendChild(title);
+
+    st.scenes.forEach(sc => {
+      if (sc.waves.length === 0) return;
+      const scDiv = document.createElement("div");
+      scDiv.className = "scene-item";
+      const scName = document.createElement("div");
+      scName.className = "scene-name";
+      scName.innerHTML = `<span>${sc.label}</span><span>${sc.waves.length} waves</span>`;
+      scDiv.appendChild(scName);
+
+      sc.waves.forEach(w => {
+        const btn = document.createElement("button");
+        btn.className = "wave-btn" + (selectedWave && selectedWave.hdrOff === w.hdrOff ? " selected" : "");
+        btn.innerHTML = `
+          <span>Wave ${w.idStr} <small style="color:var(--text-muted)">($87:${w.hdrPtr.toString(16).toUpperCase()})</small></span>
+          <span class="badge badge-cyan">${w.entries.length} spawns</span>
+        `;
+        btn.onclick = () => selectWave(w);
+        scDiv.appendChild(btn);
+      });
+      group.appendChild(scDiv);
+    });
+    container.appendChild(group);
+  });
+}
+
+function getDiffViewMask() {
+  const sel = document.getElementById("selDiffView");
+  if (!sel || sel.value === "all") return 0;
+  const v = parseInt(sel.value, 16);
+  return isNaN(v) ? 0x20 : v;
+}
+
+function getDiffViewLabel(mask) {
+  if (mask === 0x10) return "Easy";
+  if (mask === 0x20) return "Normal";
+  if (mask === 0x40) return "Hard";
+  if (mask === 0x80) return "Expert";
+  return "Todas";
+}
+
+function entrySpawnsInDiff(ent, viewMask) {
+  if (!viewMask) return true;
+  if (!isEnemyId(ent.id)) return true; // Objetos quebráveis sempre nascem
+  const dm = ent.diffHp & 0xF0;
+  if (dm === 0) return true; // 0x00 = todas as dificuldades
+  return (dm & viewMask) !== 0;
+}
+
+function formatDiffBadge(ent) {
+  if (!isEnemyId(ent.id)) {
+    return { text: "Objeto (Sempre)", cls: "badge-cyan" };
+  }
+  const dm = ent.diffHp & 0xF0;
+  if (dm === 0 || dm === 0xF0) return { text: "Todas (E/N/H/X)", cls: "badge-green" };
+  const parts = [];
+  if (dm & 0x10) parts.push("Easy");
+  if (dm & 0x20) parts.push("Normal");
+  if (dm & 0x40) parts.push("Hard");
+  if (dm & 0x80) parts.push("Expert");
+  const hasNorm = (dm & 0x20) !== 0;
+  const label = parts.length === 1 ? `Só ${parts[0]}` : parts.join("+");
+  return { text: label, cls: hasNorm ? "badge-cyan" : "badge-gold" };
+}
+
+function onDiffViewChange() {
+  activeDiffView = getDiffViewMask();
+  renderWaveEntriesList();
+  drawWaveCanvas();
+}
+
+function updateMoveButtons() {
+  const btnUp = document.getElementById("btnMoveUp");
+  const btnDown = document.getElementById("btnMoveDown");
+  const hasSel = selectedWave && selectedEntryIndex >= 0 && selectedEntryIndex < selectedWave.entries.length;
+  if (btnUp) btnUp.disabled = !hasSel || selectedEntryIndex <= 0;
+  if (btnDown) btnDown.disabled = !hasSel || selectedEntryIndex >= selectedWave.entries.length - 1;
+}
+
+function selectWave(wave, keepEntryIndex = null) {
+  selectedWave = wave;
+  selectedStage = parsedStages.find(st => st.scenes.some(sc => sc.waves.includes(wave))) || selectedStage;
+  if (keepEntryIndex !== null && keepEntryIndex >= 0 && keepEntryIndex < wave.entries.length) {
+    selectedEntryIndex = keepEntryIndex;
+  } else {
+    selectedEntryIndex = wave.entries.length > 0 ? 0 : -1;
+  }
+  renderStagesTree();
+
+  const enemyCount = wave.entries.filter(ent => isEnemyId(ent.id)).length;
+  document.getElementById("currentWaveTitle").textContent =
+    `${wave.sceneLabel} — Wave ${wave.idStr} ($87:${wave.hdrPtr.toString(16).toUpperCase()})`;
+  document.getElementById("currentWaveMeta").textContent =
+    `Trigger X: ${toHex16(wave.trigX)} | Lock Câmera X: ${toHex16(wave.lockX)} | Inimigos ($168C/$1696): ${enemyCount} | Seta GO! ($168D): ${wave.killCount} | Capacidade: ${wave.entries.length}/${wave.maxEntriesInPlace}`;
+
+  const form = document.getElementById("waveHeaderForm");
+  form.style.opacity = "1";
+  form.style.pointerEvents = "auto";
+  document.getElementById("inpTrigX").value = toHex16(wave.trigX);
+  document.getElementById("inpLockX").value = toHex16(wave.lockX);
+  document.getElementById("inpKillCount").value = wave.killCount;
+  document.getElementById("inpEntryCount").value = enemyCount;
+  document.getElementById("inpTrigX").disabled = (wave.trigXOff === null);
+
+  document.getElementById("btnAddEnemy").disabled = false;
+  const btnExp = document.getElementById("btnAutoExpandStage");
+  if (btnExp) btnExp.disabled = !selectedStage;
+  document.getElementById("btnCloneEnemy").disabled = (selectedEntryIndex < 0);
+  document.getElementById("btnDeleteEnemy").disabled = (selectedEntryIndex < 0);
+  updateMoveButtons();
+
+  renderWaveEntriesList();
+  populateInspector();
+  drawWaveCanvas();
+}
+
+function renderWaveEntriesList() {
+  const list = document.getElementById("waveEntriesList");
+  list.innerHTML = "";
+  if (!selectedWave) return;
+
+  const viewMask = getDiffViewMask();
+  activeDiffView = viewMask;
+  const summaryEl = document.getElementById("waveDiffSummary");
+  if (summaryEl) {
+    const total = selectedWave.entries.length;
+    const totalEnemies = selectedWave.entries.filter(e => isEnemyId(e.id)).length;
+    const totalObjs = total - totalEnemies;
+    if (viewMask) {
+      const activeEnemies = selectedWave.entries.filter(e => isEnemyId(e.id) && entrySpawnsInDiff(e, viewMask)).length;
+      const skipped = totalEnemies - activeEnemies;
+      const diffName = getDiffViewLabel(viewMask);
+      summaryEl.textContent = `${total} registros na ROM (${totalEnemies} inimigos${totalObjs ? `, ${totalObjs} obj` : ""}) • ${activeEnemies} inimigos nascem no ${diffName}` +
+        (skipped > 0 ? ` (${skipped} só em outras dificuldades)` : "");
+    } else {
+      summaryEl.textContent = `${total} registros na ROM (${totalEnemies} inimigos${totalObjs ? `, ${totalObjs} obj` : ""}) • Clique em um item para editar à direita`;
+    }
+  }
+
+  selectedWave.entries.forEach((ent, idx) => {
+    const info = getEnemyInfo(ent.id);
+    const activeInDiff = entrySpawnsInDiff(ent, viewMask);
+    const diffBadge = formatDiffBadge(ent);
+    const row = document.createElement("div");
+    row.className = "entry-row" + (idx === selectedEntryIndex ? " selected" : "");
+    if (!activeInDiff) {
+      row.style.opacity = "0.48";
+      row.style.borderStyle = "dashed";
+    }
+    const xDesc = ent.x >= 0x8000
+      ? `Rel(${ent.x >= 0x8100 ? '+' : ''}${(ent.x - 0x8100)}px / ${toHex16(ent.x)})`
+      : `Abs(${toHex16(ent.x)})`;
+    const hpLvl = ent.diffHp & 0x0F;
+
+    row.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="entry-dot" style="background:${info.color}"></span>
+        <strong>#${idx + 1}</strong>
+        <span>${info.name}</span>
+        <span class="badge ${diffBadge.cls}">${diffBadge.text}</span>
+      </div>
+      <div style="display:flex; gap:10px; color:var(--text-muted); font-size:11.5px; align-items:center;">
+        <span>X: <strong style="color:var(--text)">${xDesc}</strong></span>
+        <span>Y: <strong style="color:var(--text)">${toHex16(ent.y)}</strong></span>
+        <span>Delay: <strong>${ent.delay}f</strong></span>
+        <span>${isEnemyId(ent.id) ? `HP/IA: <strong>Nv.${hpLvl}</strong>` : `Drop/Val: <strong>0x${ent.diffHp.toString(16).toUpperCase().padStart(2,'0')}</strong>`}</span>
+      </div>
+    `;
+    row.onclick = () => {
+      selectedEntryIndex = idx;
+      updateMoveButtons();
+      renderWaveEntriesList();
+      populateInspector();
+      drawWaveCanvas();
+    };
+    list.appendChild(row);
+  });
+}
+
+function populateInspector() {
+  const panel = document.getElementById("inspectorPanel");
+  const badge = document.getElementById("selectedEntryBadge");
+  if (!selectedWave || selectedEntryIndex < 0 || selectedEntryIndex >= selectedWave.entries.length) {
+    panel.style.opacity = "0.45";
+    panel.style.pointerEvents = "none";
+    badge.textContent = "Nenhum";
+    document.getElementById("btnCloneEnemy").disabled = true;
+    document.getElementById("btnDeleteEnemy").disabled = true;
+    updateMoveButtons();
+    return;
+  }
+
+  panel.style.opacity = "1";
+  panel.style.pointerEvents = "auto";
+  document.getElementById("btnCloneEnemy").disabled = false;
+  const btnExp = document.getElementById("btnAutoExpandStage");
+  if (btnExp) btnExp.disabled = false;
+  document.getElementById("btnDeleteEnemy").disabled = false;
+  updateMoveButtons();
+
+  const ent = selectedWave.entries[selectedEntryIndex];
+  const entIsEnemy = isEnemyId(ent.id);
+  badge.textContent = `Spawn #${selectedEntryIndex + 1}`;
+
+  // Ensure dropdown has custom ID if needed
+  if (![...selEnemyId.options].some(o => parseInt(o.value) === ent.id)) {
+    const info = getEnemyInfo(ent.id);
+    const opt = document.createElement("option");
+    opt.value = ent.id;
+    opt.textContent = `0x${ent.id.toString(16).toUpperCase().padStart(2,'0')} — ${info.name}`;
+    selEnemyId.appendChild(opt);
+  }
+  selEnemyId.value = ent.id;
+
+  const selXMode = document.getElementById("selXMode");
+  if (ent.x === 0x8220) selXMode.value = "rel_right";
+  else if (ent.x === 0x80E0) selXMode.value = "rel_left";
+  else if (ent.x >= 0x8000) selXMode.value = "rel_custom";
+  else selXMode.value = "abs";
+
+  document.getElementById("inpSpawnX").value = toHex16(ent.x);
+  document.getElementById("inpSpawnY").value = toHex16(ent.y);
+  document.getElementById("inpDelay").value = ent.delay;
+
+  const modeHex = "0x" + ent.spawnMode.toString(16).toUpperCase().padStart(2, "0");
+  document.getElementById("inpSpawnModeHex").value = modeHex;
+  const selMode = document.getElementById("selSpawnMode");
+  if (![...selMode.options].some(o => o.value === modeHex)) {
+    const opt = document.createElement("option");
+    opt.value = modeHex;
+    opt.textContent = `${modeHex} — Custom (${modeHex})`;
+    selMode.appendChild(opt);
+  }
+  selMode.value = modeHex;
+
+  const diffGroup = document.getElementById("diffFieldGroup");
+  const lblDiff = document.getElementById("lblDiffField");
+  const chkIds = ["chkDiffEasy", "chkDiffNorm", "chkDiffHard", "chkDiffExp"];
+  if (!entIsEnemy) {
+    // Objetos quebráveis sempre aparecem (bits 4..7 de +$08 devem ficar em 0 para não corromper $82:D001!)
+    if (diffGroup) diffGroup.style.opacity = "0.55";
+    if (lblDiff) lblDiff.textContent = "Dificuldade (Objetos sempre aparecem — bits 4..7 = 0)";
+    chkIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.checked = false; el.disabled = true; }
+    });
+  } else {
+    if (diffGroup) diffGroup.style.opacity = "1";
+    if (lblDiff) lblDiff.textContent = "Dificuldades em que Aparece (Bits 4..7 de +$08)";
+    chkIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = false;
+    });
+    document.getElementById("chkDiffEasy").checked = (ent.diffHp & 0x10) !== 0;
+    document.getElementById("chkDiffNorm").checked = (ent.diffHp & 0x20) !== 0;
+    document.getElementById("chkDiffHard").checked = (ent.diffHp & 0x40) !== 0;
+    document.getElementById("chkDiffExp").checked  = (ent.diffHp & 0x80) !== 0;
+  }
+  document.getElementById("inpHpLevel").value = (ent.diffHp & 0x0F);
+}
+
+function onXModeChange() {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const mode = document.getElementById("selXMode").value;
+  if (mode === "rel_right") document.getElementById("inpSpawnX").value = "0x8220";
+  else if (mode === "rel_left") document.getElementById("inpSpawnX").value = "0x80E0";
+  else if (mode === "abs") document.getElementById("inpSpawnX").value = toHex16(selectedWave.lockX + 128);
+  updateSelectedEntryFromUI();
+}
+
+function parseHexOrInt(str, fallback) {
+  const clean = String(str).trim();
+  const n = clean.startsWith("0x") || clean.startsWith("0X")
+    ? parseInt(clean, 16)
+    : parseInt(clean, 16);
+  return isNaN(n) ? fallback : (n & 0xFFFF);
+}
+
+function updateSelectedEntryFromHexMode() {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const ent = selectedWave.entries[selectedEntryIndex];
+  const val = parseHexOrInt(document.getElementById("inpSpawnModeHex").value, ent.spawnMode) & 0xFF;
+  ent.spawnMode = val;
+  writeWaveToRom(selectedWave);
+  populateInspector();
+  renderWaveEntriesList();
+  drawWaveCanvas();
+}
+
+function updateSelectedEntryFromUI(fromSpawnModeSelect = false) {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const ent = selectedWave.entries[selectedEntryIndex];
+  const prevWasEnemy = isEnemyId(ent.id);
+  const newId = parseInt(selEnemyId.value) & 0xFF;
+  const nowIsEnemy = isEnemyId(newId);
+
+  ent.id = newId;
+  ent.x = parseHexOrInt(document.getElementById("inpSpawnX").value, ent.x);
+  ent.y = Math.max(0x0018, Math.min(0x0068, parseHexOrInt(document.getElementById("inpSpawnY").value, ent.y)));
+  ent.delay = Math.max(1, Math.min(4095, parseInt(document.getElementById("inpDelay").value) || 1));
+
+  if (fromSpawnModeSelect) {
+    const selModeVal = parseInt(document.getElementById("selSpawnMode").value, 16);
+    if (!isNaN(selModeVal)) {
+      ent.spawnMode = selModeVal & 0xFF;
+      document.getElementById("inpSpawnModeHex").value = "0x" + ent.spawnMode.toString(16).toUpperCase().padStart(2, "0");
+    }
+  } else if (prevWasEnemy && !nowIsEnemy) {
+    // Convertendo inimigo -> objeto quebrável: garante modo de objeto (>= 0x80)
+    if (ent.spawnMode < 0x80) ent.spawnMode = 0x8E;
+  } else if (!prevWasEnemy && nowIsEnemy) {
+    // Convertendo objeto quebrável -> inimigo: limpa modo de drop (>= 0x80) para caminhando (0x00)
+    if (ent.spawnMode >= 0x80) ent.spawnMode = 0x00;
+  }
+
+  const hp = Math.max(0, Math.min(15, parseInt(document.getElementById("inpHpLevel").value) || 0));
+  if (!nowIsEnemy) {
+    // Objetos quebráveis (0x54..0x75): bits 4..7 de +$08 DEVEM ficar em 0 para não corromper $82:D001!
+    ent.diffHp = Math.max(1, hp) & 0x0F;
+  } else {
+    let diffMask = 0;
+    if (document.getElementById("chkDiffEasy").checked) diffMask |= 0x10;
+    if (document.getElementById("chkDiffNorm").checked) diffMask |= 0x20;
+    if (document.getElementById("chkDiffHard").checked) diffMask |= 0x40;
+    if (document.getElementById("chkDiffExp").checked)  diffMask |= 0x80;
+    if (diffMask === 0) diffMask = 0xF0; // Evita que o inimigo fique invisível em todas as dificuldades
+    ent.diffHp = diffMask | hp;
+  }
+
+  writeWaveToRom(selectedWave);
+  const enemyCount = selectedWave.entries.filter(e => isEnemyId(e.id)).length;
+  document.getElementById("inpEntryCount").value = enemyCount;
+  populateInspector();
+  renderWaveEntriesList();
+  drawWaveCanvas();
+}
+
+function updateWaveHeaderFromUI() {
+  if (!selectedWave) return;
+  if (selectedWave.trigXOff !== null) {
+    selectedWave.trigX = parseHexOrInt(document.getElementById("inpTrigX").value, selectedWave.trigX);
+    write16(romBytes, selectedWave.trigXOff, selectedWave.trigX);
+  }
+  selectedWave.lockX = parseHexOrInt(document.getElementById("inpLockX").value, selectedWave.lockX);
+  // hdr+5 ($168D) é a flag booleana (0 ou 1) que exibe a seta "GO!" ao limpar a wave; hdr+4 é $168C/$1696.
+  selectedWave.killCount = Math.max(0, Math.min(1, parseInt(document.getElementById("inpKillCount").value) || 0));
+  writeWaveToRom(selectedWave);
+  selectWave(selectedWave);
+}
+
+function syncKillCountToEnemies() {
+  if (!selectedWave) return;
+  writeWaveToRom(selectedWave);
+  selectWave(selectedWave);
+}
+
+// ============================================================================
+// GRAVAÇÃO DA WAVE NA ROM (GRAVAÇÃO IN-PLACE SEGURA)
+// ============================================================================
+function expandSceneForWave(wave) {
+  const meta = wave.sceneMeta;
+  if (!meta || meta.isGuyOverride || meta.pointerOff === null) {
+    return { ok: false, reason: "esta wave usa um script especial de Final Fight Guy sem ponteiro de tabela conhecido." };
+  }
+  if (!meta.terminated || !Number.isInteger(meta.sceneEndOff) || !Array.isArray(meta.waves)) {
+    return { ok: false, reason: "o fim do script desta cena não pôde ser validado." };
+  }
+  if (wave.entries.length > 255 || wave.entries.filter(ent => isEnemyId(ent.id)).length > 255) {
+    return { ok: false, reason: "o cabeçalho da ROM aceita no máximo 255 entradas/inimigos nesta wave." };
+  }
+
+  const oldStart = meta.sceneStartOff;
+  const oldBoundary = wave.endOff;
+  const hdrRel = wave.hdrOff - oldStart;
+  const bodyRel = hdrRel + 8;
+  const boundaryRel = oldBoundary - oldStart;
+  const oldSceneLength = meta.sceneEndOff - oldStart;
+  const oldBlockLength = oldBoundary - (wave.hdrOff + 8);
+  if (hdrRel < 0 || bodyRel > boundaryRel || oldBoundary + 2 > meta.sceneEndOff || oldBlockLength < 0 || oldSceneLength <= 0) {
+    return { ok: false, reason: "os limites do cabeçalho ou do próximo comando não são consistentes." };
+  }
+
+  const oldScene = romBytes.slice(oldStart, meta.sceneEndOff);
+  const requiredBlockLength = wave.entries.length * 9 + 2 + WAVE_EXPANSION_RESERVE_ENTRIES * 9;
+  const newBlockLength = Math.max(oldBlockLength, requiredBlockLength);
+  const growth = newBlockLength - oldBlockLength;
+  if (growth <= 0) return { ok: false, reason: "não foi possível reservar espaço adicional para esta wave." };
+
+  const newSceneLength = oldSceneLength + growth;
+  const range = findSceneRelocationRange(meta, newSceneLength);
+  if (!range) {
+    return { ok: false, reason: `não há uma área contínua segura em Bank $87 para copiar a cena inteira (${newSceneLength} bytes necessários). Cenas maiores ou blocos já ocupados precisam de uma estratégia de realocação diferente.` };
+  }
+  if (!Number.isInteger(meta.pointerOff) || meta.pointerOff < 0 || meta.pointerOff + 1 >= romBytes.length || read16(romBytes, meta.pointerOff) !== meta.scPtr) {
+    return { ok: false, reason: "o ponteiro da cena não corresponde mais à tabela carregada pelo editor." };
+  }
+
+  const newStart = range.dataStart;
+  const newBoundary = newStart + boundaryRel + growth;
+  const newEndPtr = bank87OffsetToPointer(newBoundary);
+  const newScenePtr = bank87OffsetToPointer(newStart);
+  if (newEndPtr < 0 || newScenePtr < 0 || newStart + newSceneLength > range.end) {
+    return { ok: false, reason: "a expansão ultrapassaria os limites endereçáveis do Bank $87." };
+  }
+
+  const output = new Uint8Array(newSceneLength);
+  output.set(oldScene.subarray(0, bodyRel), 0);
+  output[hdrRel + 4] = wave.entries.filter(ent => isEnemyId(ent.id)).length & 0xFF;
+  write16(output, hdrRel + 6, newEndPtr);
+  let outOff = bodyRel;
+  for (const ent of wave.entries) {
+    write16(output, outOff, ent.delay);
+    write16(output, outOff + 2, ent.x);
+    write16(output, outOff + 4, ent.y);
+    output[outOff + 6] = ent.id & 0xFF;
+    output[outOff + 7] = ent.spawnMode & 0xFF;
+    output[outOff + 8] = ent.diffHp & 0xFF;
+    outOff += 9;
+  }
+  write16(output, outOff, 0x8000);
+  output.set(oldScene.subarray(boundaryRel), bodyRel + newBlockLength);
+
+  // Os bytes só são escritos depois de confirmar espaço, ponteiros e limites.
+  if (!range.existing) {
+    romBytes[range.start] = BANK87_RELOCATION_MAGIC[0];
+    romBytes[range.start + 1] = BANK87_RELOCATION_MAGIC[1];
+  }
+  romBytes.set(output, newStart);
+  write16(romBytes, meta.pointerOff, newScenePtr);
+
+  const mapOffset = oldOff => newStart + (oldOff - oldStart) + (oldOff >= oldBoundary ? growth : 0);
+  const expertOffsetMoves = [];
+  for (const item of meta.waves) {
+    const oldHdr = item.hdrOff;
+    const oldEnd = item.endOff;
+    const oldTrig = item.trigXOff;
+    if (item === wave) {
+      item.hdrOff = newStart + hdrRel;
+      item.endOff = newBoundary;
+      item.entries.forEach((ent, index) => {
+        const oldEntryOff = ent.fileOff;
+        const newEntryOff = item.hdrOff + 8 + index * 9;
+        if (expertRosterAddedOffsets && expertRosterAddedOffsets.has(oldEntryOff)) {
+          expertOffsetMoves.push([oldEntryOff, newEntryOff]);
+        }
+        ent.fileOff = newEntryOff;
+      });
+      item.entryCount = item.entries.filter(ent => isEnemyId(ent.id)).length;
+      item.has8000Terminator = true;
+    } else {
+      item.hdrOff = mapOffset(oldHdr);
+      item.endOff = mapOffset(oldEnd);
+      item.entries.forEach(ent => {
+        const oldEntryOff = ent.fileOff;
+        const newEntryOff = mapOffset(oldEntryOff);
+        if (expertRosterAddedOffsets && expertRosterAddedOffsets.has(oldEntryOff)) {
+          expertOffsetMoves.push([oldEntryOff, newEntryOff]);
+        }
+        ent.fileOff = newEntryOff;
+      });
+    }
+    item.trigXOff = oldTrig === null ? null : mapOffset(oldTrig);
+    item.hdrPtr = bank87OffsetToPointer(item.hdrOff);
+    item.endPtr = bank87OffsetToPointer(item.endOff);
+    item.maxEntriesInPlace = Math.floor((item.endOff - (item.hdrOff + 8)) / 9);
+    item.originalEntryCount = item.entries.length;
+    write16(romBytes, item.hdrOff + 6, item.endPtr);
+  }
+  if (expertRosterAddedOffsets && expertOffsetMoves.length) {
+    expertOffsetMoves.forEach(([oldOff]) => expertRosterAddedOffsets.delete(oldOff));
+    expertOffsetMoves.forEach(([, newOff]) => expertRosterAddedOffsets.add(newOff));
+  }
+
+  meta.sceneStartOff = newStart;
+  meta.sceneEndOff += growth + (newStart - oldStart);
+  meta.scPtr = newScenePtr;
+  meta.relocatedRange = range;
+  if (meta.sceneRef) {
+    meta.sceneRef.scPtr = newScenePtr;
+    meta.sceneRef.label = meta.sceneRef.label.replace(/(\$87:)[0-9A-F]+/i, `$1${newScenePtr.toString(16).toUpperCase()}`);
+  }
+  updateFreeSpaceBadge();
+  renderStagesTree();
+  return { ok: true };
+}
+
+function writeWaveToRom(wave, options = {}) {
+  if (wave.entries.length > wave.maxEntriesInPlace) {
+    const expansion = expandSceneForWave(wave);
+    if (!expansion.ok) {
+      if (!options.silent) alert(translateText(`Não foi possível adicionar as entradas excedentes.\n\n${expansion.reason}`));
+      return false;
+    }
+  }
+  // Em $82:CF83, hdr+4 inicializa tanto $168C (mortes p/ liberar) quanto $1696 (total de inimigos da wave); hdr+5 é a flag $168D ("GO!").
+  wave.entryCount = wave.entries.filter(ent => isEnemyId(ent.id)).length;
+
+  write16(romBytes, wave.hdrOff, wave.lockX);
+  romBytes[wave.hdrOff + 2] = wave.flag0;
+  romBytes[wave.hdrOff + 3] = wave.flag1;
+  romBytes[wave.hdrOff + 4] = wave.entryCount;
+  romBytes[wave.hdrOff + 5] = wave.killCount;
+  write16(romBytes, wave.hdrOff + 6, wave.endPtr);
+
+  const trackedExpertEntries = wave.entries.map(entry => ({
+    entry,
+    addedByOption: !!entry._expertRosterAdded || !!(expertRosterAddedOffsets && expertRosterAddedOffsets.has(entry.fileOff))
+  }));
+  if (expertRosterAddedOffsets) wave.entries.forEach(entry => expertRosterAddedOffsets.delete(entry.fileOff));
+  let eOff = wave.hdrOff + 8;
+  trackedExpertEntries.forEach(({ entry: ent, addedByOption }) => {
+    if (document.getElementById("chkAllEnemiesExpert").checked && isEnemyId(ent.id)) {
+      const difficultyMask = ent.diffHp & 0xF0;
+      if (difficultyMask !== 0 && (difficultyMask & 0x80) === 0) {
+        ent.diffHp |= 0x80;
+        ent._expertRosterAdded = true;
+      }
+    }
+    ent.fileOff = eOff;
+    if (expertRosterAddedOffsets && (addedByOption || ent._expertRosterAdded)) expertRosterAddedOffsets.add(eOff);
+    write16(romBytes, eOff, ent.delay);
+    write16(romBytes, eOff + 2, ent.x);
+    write16(romBytes, eOff + 4, ent.y);
+    romBytes[eOff + 6] = ent.id;
+    romBytes[eOff + 7] = ent.spawnMode;
+    romBytes[eOff + 8] = ent.diffHp;
+    eOff += 9;
+  });
+  if (eOff + 2 <= wave.endOff) {
+    write16(romBytes, eOff, 0x8000);
+  }
+  wave.originalEntryCount = wave.entries.length;
+  return true;
+}
+
+function addEnemyToWave() {
+  if (!selectedWave) return;
+  const newEnt = {
+    fileOff: 0,
+    delay: 0x0010,
+    x: 0x8220, // Borda direita da câmera
+    y: 0x0038,
+    id: 0x00,  // Bred
+    spawnMode: 0x00,
+    diffHp: 0xF1
+  };
+  selectedWave.entries.push(newEnt);
+  let targetIdx = selectedWave.entries.length - 1;
+  if (!writeWaveToRom(selectedWave)) {
+    selectedWave.entries.pop();
+    targetIdx = selectedWave.entries.length - 1;
+  }
+  selectWave(selectedWave, targetIdx);
+}
+
+function duplicateSelectedEnemy() {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const src = selectedWave.entries[selectedEntryIndex];
+  const clone = {
+    fileOff: 0,
+    delay: 0x0008,
+    x: src.x,
+    y: Math.min(0x0058, src.y + 6),
+    id: src.id,
+    spawnMode: src.spawnMode,
+    diffHp: src.diffHp,
+    _expertRosterAdded: !!(expertRosterAddedOffsets && expertRosterAddedOffsets.has(src.fileOff))
+  };
+  const insertIdx = selectedEntryIndex + 1;
+  selectedWave.entries.splice(insertIdx, 0, clone);
+  let targetIdx = insertIdx;
+  if (!writeWaveToRom(selectedWave)) {
+    selectedWave.entries.splice(insertIdx, 1);
+    targetIdx = selectedEntryIndex;
+  }
+  selectWave(selectedWave, targetIdx);
+}
+
+function moveSelectedEntry(delta) {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const targetIdx = selectedEntryIndex + delta;
+  if (targetIdx < 0 || targetIdx >= selectedWave.entries.length) return;
+  const entries = selectedWave.entries;
+  const tmp = entries[selectedEntryIndex];
+  entries[selectedEntryIndex] = entries[targetIdx];
+  entries[targetIdx] = tmp;
+  writeWaveToRom(selectedWave);
+  selectWave(selectedWave, targetIdx);
+}
+
+function deleteSelectedEnemy() {
+  if (!selectedWave || selectedEntryIndex < 0) return;
+  const [removedEntry] = selectedWave.entries.splice(selectedEntryIndex, 1);
+  if (expertRosterAddedOffsets && removedEntry) expertRosterAddedOffsets.delete(removedEntry.fileOff);
+  const nextIdx = selectedWave.entries.length > 0
+    ? Math.min(selectedEntryIndex, selectedWave.entries.length - 1)
+    : -1;
+  writeWaveToRom(selectedWave);
+  selectWave(selectedWave, nextIdx);
+}
+
+// ============================================================================
+// CANVAS INTERATIVO 2D (VISUALIZAÇÃO DA TELA E DRAG-AND-DROP X/Y)
+// ============================================================================
+const canvas = document.getElementById("waveCanvas");
+const ctx = canvas.getContext("2d");
+
+function getWorldXForEntry(ent, wave) {
+  if (ent.x >= 0x8000) {
+    return wave.lockX + (ent.x - 0x8100);
+  }
+  return ent.x;
+}
+
+function worldToCanvas(wx, wy, wave) {
+  // Mapeia [lockX - 80 .. lockX + 336] para [0 .. canvas.width]
+  const viewMinX = wave.lockX - 80;
+  const viewWidth = 416; // 256px tela SNES + 80px margens esq/dir
+  const cx = ((wx - viewMinX) / viewWidth) * canvas.width;
+  // No Final Fight SNES, Y=0x0058 é o topo da calçada e Y=0x0020 é a parte inferior da rua
+  const normY = (0x0060 - wy) / (0x0060 - 0x0018);
+  const cy = 95 + normY * (canvas.height - 125);
+  return { cx, cy };
+}
+
+function canvasToWorld(cx, cy, wave) {
+  const viewMinX = wave.lockX - 80;
+  const viewWidth = 416;
+  const wx = Math.round(viewMinX + (cx / canvas.width) * viewWidth);
+  const normY = Math.max(0, Math.min(1, (cy - 95) / (canvas.height - 125)));
+  const wy = Math.round(0x0060 - normY * (0x0060 - 0x0018));
+  return { wx, wy: Math.max(0x0018, Math.min(0x005C, wy)) };
+}
+
+function drawWaveCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!selectedWave) return;
+
+  const wave = selectedWave;
+  // Fundo de cenário estilizado (Calçada, Asfalto e Limites da Câmera)
+  ctx.fillStyle = "#16192b";
+  ctx.fillRect(0, 0, canvas.width, 95); // Parede/Fundo
+  ctx.fillStyle = "#22273d";
+  ctx.fillRect(0, 95, canvas.width, 45); // Calçada (Y ~ 0x58..0x48)
+  ctx.fillStyle = "#181c2c";
+  ctx.fillRect(0, 140, canvas.width, canvas.height - 140); // Rua (Y ~ 0x48..0x20)
+
+  // Linhas de grade de profundidade Y
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  [0x0058, 0x0048, 0x0038, 0x0028].forEach(yVal => {
+    const { cy } = worldToCanvas(wave.lockX, yVal, wave);
+    ctx.beginPath();
+    ctx.moveTo(0, cy);
+    ctx.lineTo(canvas.width, cy);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.font = "10px monospace";
+    ctx.fillText(`Y=${toHex16(yVal)}`, 8, cy - 4);
+  });
+
+  // Retângulo da Tela Visível do SNES (Camera Lock X .. Camera Lock X + 256)
+  const leftEdge = worldToCanvas(wave.lockX, 0x0058, wave).cx;
+  const rightEdge = worldToCanvas(wave.lockX + 256, 0x0058, wave).cx;
+
+  ctx.fillStyle = "rgba(0, 229, 255, 0.04)";
+  ctx.fillRect(leftEdge, 10, rightEdge - leftEdge, canvas.height - 20);
+  ctx.strokeStyle = "#00e5ff";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeRect(leftEdge, 10, rightEdge - leftEdge, canvas.height - 20);
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "#00e5ff";
+  ctx.font = "bold 11px Segoe UI, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText(`${currentLanguage === "en" ? "📷 Camera X" : "📷 Câmera X"}: ${toHex16(wave.lockX)}..${toHex16(wave.lockX + 256)}`, leftEdge + 8, 26);
+
+  // Marcações das bordas de spawn relativo ($80E0 Esquerda e $8220 Direita)
+  const relLeftX = worldToCanvas(wave.lockX - 32, 0x0058, wave).cx;
+  const relRightX = worldToCanvas(wave.lockX + 288, 0x0058, wave).cx;
+  ctx.fillStyle = "rgba(255,193,7,0.65)";
+  ctx.font = "10px monospace";
+  ctx.fillText(`${currentLanguage === "en" ? "◄ Left Spawn" : "◄ Spawn Esq"} ($80E0)`, Math.max(4, relLeftX - 45), 44);
+  ctx.fillText(`${currentLanguage === "en" ? "Right Spawn" : "Spawn Dir"} ($8220) ►`, Math.min(canvas.width - 125, relRightX - 40), 44);
+
+  // Indicador do modo atual alinhado à direita dentro da borda da câmera (sem sobrepor o título esquerdo!)
+  const mode = romBytes ? activeEnemyMode : 3;
+  ctx.fillStyle = mode === 4 ? "#00e676" : "#00e5ff";
+  ctx.font = "bold 11px Segoe UI, sans-serif";
+  const canvasModeText = translateText(mode === 4
+    ? (activeP2VramBank ? "Modo: 4 inimigos + Banco P2 (1P)" : "Modo: 4 inimigos (compartilhamento)")
+    : "Modo: original (3 inimigos)");
+  ctx.textAlign = "right";
+  ctx.fillText(canvasModeText, rightEdge - 8, 26);
+  ctx.textAlign = "left";
+
+  // Desenha cada entrada (inimigo ou objeto)
+  // Para evitar que inimigos com mesmo (X,Y) fiquem ocultos um sob o outro, aplica leve offset visual se coincidirem
+  const viewMask = getDiffViewMask();
+  const overlapCounter = {};
+  wave.entries.forEach((ent, idx) => {
+    const wx = getWorldXForEntry(ent, wave);
+    const key = `${wx}_${ent.y}`;
+    const count = overlapCounter[key] || 0;
+    overlapCounter[key] = count + 1;
+
+    const { cx, cy } = worldToCanvas(wx + count * 10, ent.y, wave);
+    ent._renderX = cx;
+    ent._renderY = cy;
+
+    const info = getEnemyInfo(ent.id);
+    const isSelected = (idx === selectedEntryIndex);
+    const activeInDiff = entrySpawnsInDiff(ent, viewMask);
+
+    ctx.save();
+    if (!activeInDiff) ctx.globalAlpha = 0.38;
+
+    // Sombra no chão
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 14, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Corpo/Badge do Inimigo
+    ctx.fillStyle = info.color;
+    ctx.strokeStyle = isSelected ? "#ffffff" : "#0f111a";
+    ctx.lineWidth = isSelected ? 3 : 1.5;
+
+    ctx.beginPath();
+    if (info.category === "object") {
+      ctx.roundRect(cx - 13, cy - 13, 26, 24, 4);
+    } else {
+      ctx.arc(cx, cy - 2, 13, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    // Número do índice
+    ctx.fillStyle = "#0b0d14";
+    ctx.font = "bold 11px Segoe UI, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`${idx + 1}`, cx, cy + 2);
+
+    // Etiqueta com nome curto + delay
+    ctx.fillStyle = isSelected ? "#ffffff" : "#cfd8dc";
+    ctx.font = isSelected ? "bold 11px Segoe UI, sans-serif" : "10.5px Segoe UI, sans-serif";
+    const shortName = translateText(info.name.split("(")[0].replace("Objeto:", "").trim());
+    ctx.fillText(`${shortName} (${ent.delay}f)`, cx, cy - 19);
+    ctx.textAlign = "left";
+    ctx.restore();
+  });
+}
+
+canvas.addEventListener("mousedown", function(e) {
+  if (!selectedWave) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  for (let i = selectedWave.entries.length - 1; i >= 0; i--) {
+    const ent = selectedWave.entries[i];
+    const dx = mx - (ent._renderX || 0);
+    const dy = my - (ent._renderY || 0);
+    if (dx * dx + dy * dy <= 20 * 20) {
+      selectedEntryIndex = i;
+      draggingEntryIndex = i;
+      renderWaveEntriesList();
+      populateInspector();
+      drawWaveCanvas();
+      return;
+    }
+  }
+});
+
+canvas.addEventListener("mousemove", function(e) {
+  if (draggingEntryIndex < 0 || !selectedWave) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+  const ent = selectedWave.entries[draggingEntryIndex];
+  const { wx, wy } = canvasToWorld(mx, my, selectedWave);
+  ent.y = wy;
+
+  if (ent.x >= 0x8000) {
+    // Mantém coordenada relativa à câmera (0x8100 + offset)
+    const offset = Math.max(-120, Math.min(340, wx - selectedWave.lockX));
+    ent.x = (0x8100 + offset) & 0xFFFF;
+  } else {
+    ent.x = Math.max(0, wx) & 0xFFFF;
+  }
+
+  writeWaveToRom(selectedWave);
+  populateInspector();
+  renderWaveEntriesList();
+  drawWaveCanvas();
+});
+
+window.addEventListener("mouseup", function() {
+  draggingEntryIndex = -1;
+});
+
+// ============================================================================
+// EXPORTAÇÃO DE ROM (.SFC) E PATCH (.IPS)
+// ============================================================================
+function exportModifiedROM() {
+  if (!romBytes) return;
+  const mode = activeEnemyMode;
+  
+  // 1. Ensure native engine is applied
+  applyNativeEngine(romBytes, mode, activeP2VramBank);
+
+  // 2. If Auto-Duplicar checkbox is checked, ensure all waves have targetEnemies
+  const chkAutoDup = document.getElementById("chkAutoDup");
+  let autoFillResult = null;
+  if (chkAutoDup && chkAutoDup.checked) {
+    autoFillResult = autoExpandAllWavesAllStages(mode);
+  }
+  const expertRosterResult = document.getElementById("chkAllEnemiesExpert").checked
+    ? applyExpertRosterToAllWaves(true)
+    : null;
+
+  // 3. Recalculate official SNES checksum
+  recalculateSnesChecksum(romBytes);
+
+  const modeStr = mode === 4
+    ? (activeP2VramBank ? "4_Enemies_P2Bank_1P" : "4_Enemies")
+    : "3_Enemies_Original";
+  const blob = new Blob([romBytes], { type: "application/octet-stream" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Final_Fight_Guy_${modeStr}_Edited.sfc`;
+  a.click();
+  if (autoFillResult) {
+    document.getElementById("romStatusBox").textContent =
+      `Exportada: ${autoFillResult.adjustedWaves} waves ajustadas; ${autoFillResult.repeatedTypes} com família compartilhada; ${autoFillResult.clonesAdded} cópias inseridas; todos os objetos quebráveis preservados (${autoFillResult.objectsRemoved} removidos); ${autoFillResult.limitedWaves} sem área segura para expansão.`;
+  }
+  if (expertRosterResult) document.getElementById("romStatusBox").textContent += ` Expert ativo: ${expertRosterResult.expertEntries} spawns de inimigos.`;
+}
+
+function exportIPS() {
+  if (!romBytes || !originalRomBytes) return;
+  const mode = activeEnemyMode;
+
+  applyNativeEngine(romBytes, mode, activeP2VramBank);
+  const chkAutoDup = document.getElementById("chkAutoDup");
+  let autoFillResult = null;
+  if (chkAutoDup && chkAutoDup.checked) {
+    autoFillResult = autoExpandAllWavesAllStages(mode);
+  }
+  const expertRosterResult = document.getElementById("chkAllEnemiesExpert").checked
+    ? applyExpertRosterToAllWaves(true)
+    : null;
+  recalculateSnesChecksum(romBytes);
+
+  const records = [];
+  const len = romBytes.length;
+  let i = 0;
+
+  while (i < len) {
+    if (romBytes[i] !== originalRomBytes[i]) {
+      const start = i;
+      const bytes = [];
+      while (i < len && bytes.length < 0xFFFF && romBytes[i] !== originalRomBytes[i]) {
+        bytes.push(romBytes[i]);
+        i++;
+      }
+      records.push({ offset: start, bytes });
+    } else {
+      i++;
+    }
+  }
+
+  let totalSize = 5 + 3; // "PATCH" + "EOF"
+  records.forEach(r => { totalSize += 3 + 2 + r.bytes.length; });
+
+  const ips = new Uint8Array(totalSize);
+  const header = [0x50, 0x41, 0x54, 0x43, 0x48]; // "PATCH"
+  ips.set(header, 0);
+  let pos = 5;
+
+  records.forEach(r => {
+    ips[pos++] = (r.offset >> 16) & 0xFF;
+    ips[pos++] = (r.offset >> 8) & 0xFF;
+    ips[pos++] = r.offset & 0xFF;
+    ips[pos++] = (r.bytes.length >> 8) & 0xFF;
+    ips[pos++] = r.bytes.length & 0xFF;
+    ips.set(r.bytes, pos);
+    pos += r.bytes.length;
+  });
+
+  ips[pos++] = 0x45; // 'E'
+  ips[pos++] = 0x4F; // 'O'
+  ips[pos++] = 0x46; // 'F'
+
+  const blob = new Blob([ips], { type: "application/octet-stream" });
+  const a = document.createElement("a");
+  const modeStr = mode === 4
+    ? (activeP2VramBank ? "4_Enemies_P2Bank_1P" : "4_Enemies")
+    : "3_Enemies_Original";
+  a.href = URL.createObjectURL(blob);
+  a.download = `FinalFight_${modeStr}_Patch.ips`;
+  a.click();
+  if (autoFillResult) {
+    document.getElementById("romStatusBox").textContent =
+      `Patch exportado: ${autoFillResult.adjustedWaves} waves ajustadas; ${autoFillResult.repeatedTypes} com família compartilhada; ${autoFillResult.clonesAdded} cópias inseridas; todos os objetos quebráveis preservados (${autoFillResult.objectsRemoved} removidos); ${autoFillResult.limitedWaves} sem área segura para expansão.`;
+  }
+  if (expertRosterResult) document.getElementById("romStatusBox").textContent += ` Expert ativo: ${expertRosterResult.expertEntries} spawns de inimigos.`;
+}
+setLanguage(currentLanguage);
+</script>
+</body>
+</html>

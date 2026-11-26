@@ -1,0 +1,17 @@
+# Game ROMs and derived patches are not part of the source repository.
+*.sfc
+*.smc
+*.ips
+
+# Local emulator binaries, archives and debugging artifacts.
+*.exe
+*.dll
+*.pdb
+*.7z
+*.bin
+*.lua
+mesen_dump_graphics/
+img-screen_.webp
+
+# Local-only scratch script.
+.autofill-force-check.js
